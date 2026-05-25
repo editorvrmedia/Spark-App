@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { fetchProfile, ProfileWithAchievements } from '../lib/api';
 import { FollowButton } from '../components/FollowButton';
 import { Database } from '../types/database';
-import { Award, Edit3, Grid, ShieldAlert, Sparkles, X, Check, Camera, RefreshCw, Users } from 'lucide-react';
+import { Award, Edit3, Grid, ShieldAlert, Sparkles, X, Check, Camera, RefreshCw, ShieldCheck, CheckCircle, Calendar } from 'lucide-react';
 
 type DBPost = Database['public']['Tables']['posts']['Row'];
 
@@ -244,19 +244,20 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
   const isOwnProfile = profile.id === currentProfileId;
 
   return (
-    <div className="flex-1 flex flex-col w-full max-w-md bg-white dark:bg-slate-950 min-h-screen pb-24">
+    <div className="flex-1 flex flex-col w-full max-w-md bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 animate-[fadeIn_0.3s_ease-out]">
       {/* Header bar - Premium Glassmorphic */}
-      <header className="sticky top-0 z-45 glass-panel px-5 py-4 flex items-center justify-between shadow-sm">
+      <header className="sticky top-0 z-40 glass-panel px-5 py-4 flex items-center justify-between shadow-sm border-b border-slate-100 dark:border-slate-900/50">
         <div className="flex items-center gap-3">
           {onBack && (
             <button 
               onClick={onBack} 
-              className="text-slate-600 dark:text-slate-400 font-semibold text-sm hover:underline"
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-xl transition-colors text-slate-650 dark:text-slate-400"
+              aria-label="Go back"
             >
-              ← Back
+              <X className="w-4 h-4" />
             </button>
           )}
-          <span className="font-extrabold text-slate-900 dark:text-slate-100 text-lg">
+          <span className="font-extrabold text-slate-950 dark:text-slate-50 text-base">
             {profile.username}'s Profile
           </span>
         </div>
@@ -264,7 +265,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
         {isOwnProfile ? (
           <button
             onClick={() => setIsEditOpen(true)}
-            className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-xs font-bold text-slate-700 dark:text-slate-300 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/20 dark:hover:bg-purple-950/40 rounded-full text-xs font-bold text-purple-600 dark:text-purple-400 transition-all active:scale-[0.98]"
           >
             <Edit3 className="w-3.5 h-3.5" />
             Edit Profile
@@ -280,11 +281,27 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
         )}
       </header>
 
+      {/* Modern Abstract Cover Banner */}
+      <div className="relative w-full h-32 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 dark:from-purple-900/30 dark:via-pink-900/30 dark:to-indigo-900/30 overflow-hidden">
+        {/* Glow objects */}
+        <div className="absolute -top-10 -left-10 w-28 h-28 bg-white/10 rounded-full blur-lg animate-pulse" />
+        <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-indigo-500/20 rounded-full blur-xl" />
+      </div>
+
       {/* Profile Details Header Section */}
-      <div className="p-5 flex flex-col gap-4 border-b border-slate-100 dark:border-slate-900/80">
-        <div className="flex items-center gap-5">
-          {/* Avatar frame */}
-          <div className="relative p-[1.5px] bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-600 rounded-full">
+      <div className="px-5 pb-5 flex flex-col gap-4 border-b border-slate-100 dark:border-slate-900/60 relative">
+        
+        {/* Avatar & Name container */}
+        <div className="flex flex-col items-start text-left mt-[-44px] relative z-10 gap-3">
+          
+          {/* Avatar Ring based on role */}
+          <div className={`p-[3px] rounded-full shadow-lg ${
+            profile.role === 'admin' 
+              ? 'bg-gradient-to-tr from-amber-400 via-yellow-500 to-orange-500' 
+              : profile.role === 'moderator'
+                ? 'bg-gradient-to-tr from-fuchsia-500 via-purple-500 to-indigo-500'
+                : 'bg-gradient-to-tr from-blue-400 via-teal-500 to-indigo-500'
+          }`}>
             {profile.avatar_url ? (
               <img 
                 src={profile.avatar_url} 
@@ -292,47 +309,76 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
                 className="w-20 h-20 rounded-full object-cover border-4 border-white dark:border-slate-950"
               />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-850 flex items-center justify-center font-bold text-2xl border-4 border-white dark:border-slate-950 text-slate-500">
+              <div className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-850 flex items-center justify-center font-bold text-2xl border-4 border-white dark:border-slate-950 text-slate-550">
                 {profile.display_name?.slice(0,2).toUpperCase() || 'SP'}
               </div>
             )}
           </div>
 
-          <div className="flex flex-col gap-2.5 text-left">
-            <div className="flex flex-col gap-0.5">
-              <h2 className="text-xl font-black text-slate-900 dark:text-slate-50 leading-tight">
+          <div className="flex flex-col gap-1 w-full">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h2 className="text-xl font-black text-slate-950 dark:text-slate-50 tracking-tight">
                 {profile.display_name || profile.username}
               </h2>
-              <span className="text-xs text-slate-400 font-semibold tracking-wide">
-                @{profile.username}
-              </span>
+              {/* Role Verified Badges */}
+              {profile.role === 'admin' && (
+                <span className="flex items-center gap-0.5 px-2.5 py-0.5 rounded-full text-[9px] font-black bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                  <ShieldCheck className="w-3 h-3" />
+                  Admin
+                </span>
+              )}
+              {profile.role === 'moderator' && (
+                <span className="flex items-center gap-0.5 px-2.5 py-0.5 rounded-full text-[9px] font-black bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+                  <ShieldAlert className="w-3 h-3" />
+                  Moderator
+                </span>
+              )}
+              {profile.role === 'user' && (
+                <span className="flex items-center gap-0.5 px-2.5 py-0.5 rounded-full text-[9px] font-black bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                  <CheckCircle className="w-3 h-3" />
+                  Verified Student
+                </span>
+              )}
             </div>
             
-            {/* Social Follow Stats Row */}
-            <div className="flex items-center gap-4 text-xs font-bold text-slate-700 dark:text-slate-300">
-              <div className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-slate-400" />
-                <span>{followersCount.toLocaleString()}</span>
-                <span className="font-semibold text-slate-450 dark:text-slate-500">followers</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span>{followingCount.toLocaleString()}</span>
-                <span className="font-semibold text-slate-450 dark:text-slate-500">following</span>
-              </div>
-            </div>
+            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+              @{profile.username}
+            </span>
           </div>
         </div>
 
-        {/* Bio */}
-        {profile.bio && (
-          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed pl-1 whitespace-pre-line text-left">
-            {profile.bio}
+        {/* Bio inside a card */}
+        {profile.bio ? (
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 p-3.5 rounded-2xl shadow-sm text-left">
+            <p className="text-xs text-slate-700 dark:text-slate-350 leading-relaxed whitespace-pre-line">
+              {profile.bio}
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-slate-400 dark:text-slate-650 italic text-left pl-1">
+            No bio provided yet.
           </p>
         )}
+
+        {/* Structured Premium Counters Grid */}
+        <div className="grid grid-cols-3 gap-2 bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/50 rounded-2xl p-3 text-center shadow-sm">
+          <div className="flex flex-col items-center border-r border-slate-100 dark:border-slate-850">
+            <span className="text-sm font-black text-slate-850 dark:text-slate-100">{posts.length}</span>
+            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider mt-0.5">Posts</span>
+          </div>
+          <div className="flex flex-col items-center border-r border-slate-100 dark:border-slate-850">
+            <span className="text-sm font-black text-slate-850 dark:text-slate-100">{followersCount.toLocaleString()}</span>
+            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider mt-0.5">Followers</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-sm font-black text-slate-850 dark:text-slate-100">{followingCount.toLocaleString()}</span>
+            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider mt-0.5">Following</span>
+          </div>
+        </div>
       </div>
 
       {/* Grid vs Achievements Tabs */}
-      <div className="flex border-b border-slate-100 dark:border-slate-900/80 bg-slate-50/50 dark:bg-slate-900/30">
+      <div className="flex border-b border-slate-100 dark:border-slate-900/80 bg-white/50 dark:bg-slate-900/30">
         <button
           onClick={() => setActiveTab('posts')}
           className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-2 border-b-2 transition-all ${
@@ -362,7 +408,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
         {activeTab === 'posts' && (
           <>
             {posts.length === 0 ? (
-              <div className="py-16 text-center text-slate-450 text-xs font-medium">
+              <div className="py-16 text-center text-slate-400 text-xs font-medium bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 p-8 shadow-sm">
                 No published sparks found.
               </div>
             ) : (
@@ -370,18 +416,26 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
                 {posts.map(post => (
                   <div 
                     key={post.id} 
-                    className="group relative w-full aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-100 dark:border-slate-900 select-none cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                    className="group relative w-full aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 select-none cursor-pointer shadow-sm hover:shadow-md transition-all duration-300"
                   >
                     {post.image_url || (post.media_urls && post.media_urls.length > 0) ? (
-                      <img 
-                        src={post.image_url || post.media_urls[0]} 
-                        alt={post.title} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
+                      <>
+                        <img 
+                          src={post.image_url || post.media_urls[0]} 
+                          alt={post.title} 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        {/* Hover Overlay with text */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3 text-left">
+                          <p className="text-[10px] font-bold text-white line-clamp-2 leading-relaxed">
+                            {post.title}
+                          </p>
+                        </div>
+                      </>
                     ) : (
-                      <div className="w-full h-full p-4 flex flex-col justify-between items-start bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-slate-900 dark:to-slate-850">
-                        <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Spark Text</span>
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-3 text-left">
+                      <div className="w-full h-full p-3.5 flex flex-col justify-between items-start bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-slate-900 dark:to-slate-850 hover:brightness-95 transition-all">
+                        <span className="text-[8px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest bg-purple-100 dark:bg-purple-950/50 px-1.5 py-0.5 rounded-full">Spark Text</span>
+                        <p className="text-[11px] font-bold text-slate-805 dark:text-slate-200 line-clamp-4 text-left leading-normal">
                           {post.title}
                         </p>
                         <div />
@@ -397,25 +451,29 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
         {activeTab === 'achievements' && (
           <>
             {profile.achievements.length === 0 ? (
-              <div className="py-16 text-center text-slate-450 text-xs font-medium">
+              <div className="py-16 text-center text-slate-450 text-xs font-medium bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 p-8 shadow-sm">
                 No achievements recorded yet.
               </div>
             ) : (
-              <div className="flex flex-col gap-2.5">
+              <div className="grid grid-cols-1 gap-3">
                 {profile.achievements.map((badge) => (
                   <div 
                     key={badge.id} 
-                    className={`flex items-center gap-3 p-3 rounded-2xl border ${getBadgeStyle(badge.badge_type)}`}
+                    className={`flex items-start gap-4 p-4 rounded-2xl border shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md ${getBadgeStyle(badge.badge_type)}`}
                   >
-                    <div className="p-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800/40">
+                    <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800/40 flex-shrink-0">
                       {getBadgeIcon(badge.badge_type)}
                     </div>
-                    <div className="flex flex-col text-left">
-                      <span className="text-sm font-extrabold">
+                    <div className="flex flex-col text-left justify-start gap-0.5">
+                      <span className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
                         {badge.title}
                       </span>
-                      <span className="text-[11px] opacity-90 mt-0.5 leading-snug">
+                      <span className="text-[11px] opacity-90 leading-relaxed font-medium">
                         {badge.description}
+                      </span>
+                      <span className="text-[9px] opacity-75 flex items-center gap-1 mt-1.5 font-bold uppercase tracking-wider">
+                        <Calendar className="w-3 h-3" />
+                        Earned {new Date(badge.earned_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
                       </span>
                     </div>
                   </div>
