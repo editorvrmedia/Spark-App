@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { SparkLogo } from '../components/SparkLogo';
 import { Eye, EyeOff, ShieldAlert, Sparkles, Mail, Lock, User, CheckCircle, RefreshCw } from 'lucide-react';
 
 interface AuthProps {
@@ -108,11 +109,14 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-800/40 p-8 flex flex-col gap-6 text-center">
         {/* Brand logo */}
-        <div className="flex flex-col items-center gap-1.5 mt-2">
-          <h1 className="text-4xl font-extrabold text-[#D946EF] dark:text-[#E879F9] tracking-tight font-sans select-none flex items-center gap-1">
-            Spark
-          </h1>
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+        <div className="flex flex-col items-center gap-1 mt-2">
+          <div className="flex items-center gap-3">
+            <SparkLogo size={40} />
+            <span className="text-4xl font-black text-[#D946EF] dark:text-[#E879F9] tracking-tighter font-sans select-none bg-gradient-to-r from-pink-500 to-fuchsia-600 bg-clip-text text-transparent">
+              Spark
+            </span>
+          </div>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1">
             Academy Hub
           </p>
         </div>

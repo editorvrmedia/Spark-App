@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
 import { PostCard } from './PostCard';
+import { SparkLogo } from './SparkLogo';
 import { Database } from '../types/database';
 import { AlertTriangle, RefreshCw, Sparkles, Bell, Heart, ShieldAlert } from 'lucide-react';
 
@@ -204,9 +205,12 @@ export const Feed: React.FC<FeedProps> = ({
     <div className="flex flex-col items-center w-full">
       {/* Fixed Sticky Glassmorphic Header */}
       <header className="sticky top-0 z-50 w-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/40 px-5 py-3.5 flex items-center justify-between shadow-sm">
-        <h1 className="text-3xl font-extrabold text-[#D946EF] dark:text-[#E879F9] tracking-tight font-sans select-none animate-fade-in">
-          Spark
-        </h1>
+        <div className="flex items-center gap-2.5 animate-fade-in">
+          <SparkLogo size={32} className="relative top-[-1px]" />
+          <span className="text-3.5xl font-black text-[#D946EF] dark:text-[#E879F9] tracking-tighter font-sans select-none bg-gradient-to-r from-pink-500 to-fuchsia-600 bg-clip-text text-transparent">
+            Spark
+          </span>
+        </div>
         
         {/* Header Icons on Top-Right */}
         <div className="flex items-center gap-4 text-slate-850 dark:text-slate-200">
