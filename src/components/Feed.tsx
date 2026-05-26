@@ -138,13 +138,19 @@ export interface FeedProps {
   onToggleTheme: () => void;
   onNavigateToAdmin?: () => void;
   onSelectUser?: (username: string) => void;
+  onOpenNotifications?: () => void;
+  onOpenActivity?: () => void;
+  onOpenMessages?: () => void;
 }
 
 export const Feed: React.FC<FeedProps> = ({ 
   theme,
   onToggleTheme,
   onNavigateToAdmin,
-  onSelectUser 
+  onSelectUser,
+  onOpenNotifications,
+  onOpenActivity,
+  onOpenMessages
 }) => {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -240,15 +246,27 @@ export const Feed: React.FC<FeedProps> = ({
             </button>
           )}
 
-          <button className="hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring" aria-label="Notifications">
+          <button 
+            onClick={onOpenNotifications}
+            className="hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring focus:outline-none" 
+            aria-label="Notifications"
+          >
             <Bell className="w-[26px] h-[26px]" strokeWidth={1.5} />
           </button>
           
-          <button className="hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring" aria-label="Activity">
+          <button 
+            onClick={onOpenActivity}
+            className="hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring focus:outline-none" 
+            aria-label="Activity"
+          >
             <Heart className="w-[26px] h-[26px]" strokeWidth={1.5} />
           </button>
           
-          <button className="hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring" aria-label="Direct Messages">
+          <button 
+            onClick={onOpenMessages}
+            className="hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring focus:outline-none" 
+            aria-label="Direct Messages"
+          >
             {/* Messenger Chat Icon */}
             <svg 
               viewBox="0 0 24 24" 
@@ -293,6 +311,7 @@ export const Feed: React.FC<FeedProps> = ({
               return (
                 <PostCard
                   key={post.id}
+                  postId={post.id}
                   avatarUrl={post.author?.avatar_url}
                   username={post.author?.username || 'anonymous'}
                   displayName={post.author?.display_name}
