@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { X, Loader2, Image, AlertCircle } from 'lucide-react';
+import { createPost } from '../lib/api';
 
 interface CreatePostProps {
   isOpen: boolean;
@@ -128,43 +129,25 @@ export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostC
     // Fallback title if none provided
     const resolvedTitle = title.trim() || body.trim().slice(0, 45) + (body.length > 45 ? '...' : '');
 
-    if (!isSupabaseConfigured) {
-      // Simulation mode
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setTitle('');
-      setBody('');
-      setImageUrl(null);
-      setIsSubmitting(false);
-      onPostCreated?.();
-      onClose();
-      return;
-    }
-
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) throw new Error('Authentication required to publish posts.');
+      let authorId = 'auth-2'; // Default mock user (Alex Rivera)
 
-      const { data: userProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, is_suspended')
-        .eq('user_id', user.id)
-        .single();
+      if (isSupabaseConfigured) {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) throw new Error('Authentication required to publish posts.');
 
-      if (profileError || !userProfile) throw new Error('Could not retrieve user profile records.');
-      if (userProfile.is_suspended) throw new Error('Your account is currently suspended. You cannot write posts.');
+        const { data: userProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, is_suspended')
+          .eq('user_id', user.id)
+          .single();
 
-      const { error: insertError } = await supabase
-        .from('posts')
-        .insert({
-          author_id: userProfile.id,
-          title: resolvedTitle,
-          body: body.trim(),
-          image_url: imageUrl,
-          media_urls: imageUrl ? [imageUrl] : [],
-          status: 'pending',
-        });
+        if (profileError || !userProfile) throw new Error('Could not retrieve user profile records.');
+        if (userProfile.is_suspended) throw new Error('Your account is currently suspended. You cannot write posts.');
+        authorId = userProfile.id;
+      }
 
-      if (insertError) throw insertError;
+      await createPost(resolvedTitle, body, imageUrl, imageUrl ? [imageUrl] : [], authorId);
 
       setTitle('');
       setBody('');

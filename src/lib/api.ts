@@ -382,3 +382,206 @@ export async function fetchBookmarkStatus(postId: string, profileId: string): Pr
   if (error) return false;
   return !!data;
 }
+
+// =============================================================================
+// Posts API Extension: Fetching & Creating Posts
+// =============================================================================
+
+export type DBPost = Database['public']['Tables']['posts']['Row'];
+export interface PostWithAuthor extends DBPost {
+  author: DBProfile | null;
+}
+
+const DEFAULT_MOCK_POSTS: PostWithAuthor[] = [
+  {
+    id: 'mock-post-1',
+    author_id: 'auth-1',
+    title: 'Welcome to Spark Social Feed',
+    body: 'We are thrilled to launch the new Spark App feed. This interface is built with React, TypeScript, and Tailwind CSS. Double tap cards to like, and experience smooth interactions. Enjoy the glassmorphic aesthetics!',
+    media_urls: ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop'],
+    image_url: null,
+    status: 'approved',
+    rejection_reason: null,
+    is_nsfw: false,
+    is_pinned: true,
+    deleted_at: null,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    published_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    author: MOCK_PROFILES['spark_team']
+  },
+  {
+    id: 'mock-post-2',
+    author_id: 'auth-2',
+    title: 'Frontend Optimization with Tailwind & Vite',
+    body: 'Just finished profiling our bundle sizes. By utilizing postCSS, Autoprefixer, and Vite path aliases, we kept our bundle sizes incredibly small while building custom glassmorphism styles directly in tailwind.css.',
+    media_urls: [],
+    image_url: null,
+    status: 'approved',
+    rejection_reason: null,
+    is_nsfw: false,
+    is_pinned: false,
+    deleted_at: null,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    published_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    author: MOCK_PROFILES['alex_dev']
+  }
+];
+
+export const initMockPosts = (): PostWithAuthor[] => {
+  const sessionKey = 'spark-mock-posts';
+  const posts = sessionStorage.getItem(sessionKey);
+  if (!posts) {
+    sessionStorage.setItem(sessionKey, JSON.stringify(DEFAULT_MOCK_POSTS));
+    return DEFAULT_MOCK_POSTS;
+  }
+  return JSON.parse(posts);
+};
+
+export async function fetchPosts(pageParam: number, currentProfileId: string | null, pageSize: number = 5): Promise<PostWithAuthor[]> {
+  const isSupabaseConfigured =
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+  if (!isSupabaseConfigured) {
+    await new Promise(resolve => setTimeout(resolve, 400));
+    const allPosts = initMockPosts();
+    
+    // Standard users see approved posts OR their own posts
+    const filtered = allPosts.filter(post => 
+      post.status === 'approved' || (currentProfileId && post.author_id === currentProfileId)
+    );
+
+    // Sort by created_at DESC
+    const sorted = [...filtered].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    
+    // Paginate
+    const from = pageParam * pageSize;
+    const to = from + pageSize;
+    return sorted.slice(from, to);
+  }
+
+  const from = pageParam * pageSize;
+  const to = from + pageSize - 1;
+
+  let queryBuilder = supabase
+    .from('posts')
+    .select(`
+      *,
+      author:profiles (
+        id,
+        user_id,
+        username,
+        display_name,
+        avatar_url,
+        bio,
+        role,
+        is_suspended,
+        suspension_reason,
+        created_at,
+        updated_at,
+        deleted_at
+      )
+    `)
+    .is('deleted_at', null);
+
+  if (currentProfileId) {
+    queryBuilder = queryBuilder.or(`status.eq.approved,author_id.eq.${currentProfileId}`);
+  } else {
+    queryBuilder = queryBuilder.eq('status', 'approved');
+  }
+
+  const { data, error } = await queryBuilder
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data || []).map((post: any) => ({
+    ...post,
+    author: Array.isArray(post.author) ? post.author[0] : post.author
+  })) as PostWithAuthor[];
+}
+
+export async function createPost(
+  title: string,
+  body: string,
+  imageUrl: string | null,
+  mediaUrls: string[],
+  authorProfileId: string
+): Promise<PostWithAuthor> {
+  const isSupabaseConfigured =
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+  if (!isSupabaseConfigured) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const allPosts = initMockPosts();
+    
+    const authorProfile = authorProfileId === 'auth-1' ? MOCK_PROFILES['spark_team'] : MOCK_PROFILES['alex_dev'];
+
+    const newPost: PostWithAuthor = {
+      id: `mock-post-${Date.now()}`,
+      author_id: authorProfileId,
+      title: title.trim(),
+      body: body.trim(),
+      image_url: imageUrl,
+      media_urls: mediaUrls,
+      status: 'pending', // Lands as pending
+      rejection_reason: null,
+      is_nsfw: false,
+      is_pinned: false,
+      deleted_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      published_at: null,
+      author: authorProfile || null
+    };
+
+    allPosts.unshift(newPost); // Add at top
+    sessionStorage.setItem('spark-mock-posts', JSON.stringify(allPosts));
+    return newPost;
+  }
+
+  const { data, error } = await supabase
+    .from('posts')
+    .insert({
+      author_id: authorProfileId,
+      title: title.trim(),
+      body: body.trim(),
+      image_url: imageUrl,
+      media_urls: mediaUrls,
+      status: 'pending' // Lands as pending
+    })
+    .select(`
+      *,
+      author:profiles (
+        id,
+        user_id,
+        username,
+        display_name,
+        avatar_url,
+        bio,
+        role,
+        is_suspended,
+        suspension_reason,
+        created_at,
+        updated_at,
+        deleted_at
+      )
+    `)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  const formatted = data as any;
+  return {
+    ...formatted,
+    author: Array.isArray(formatted.author) ? formatted.author[0] : formatted.author
+  } as PostWithAuthor;
+}

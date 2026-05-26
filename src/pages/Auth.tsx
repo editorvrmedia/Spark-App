@@ -4,12 +4,13 @@ import { SparkLogo } from '../components/SparkLogo';
 import { Eye, EyeOff, ShieldAlert, Sparkles, Mail, Lock, User, CheckCircle, RefreshCw } from 'lucide-react';
 
 interface AuthProps {
-  onAuthSuccess: (session: any) => void;
+  onAuthSuccess: (session: any, isNewUser?: boolean) => void;
   onBypass: () => void;
 }
 
 export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [justSignedUp, setJustSignedUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -50,6 +51,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
       await new Promise(resolve => setTimeout(resolve, 800));
       if (isSignUp) {
         setSuccessMsg('Registration simulated successfully! You can now log in.');
+        setJustSignedUp(true);
         setIsSignUp(false);
       } else {
         onAuthSuccess({
@@ -57,7 +59,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
             email: email,
             id: 'mock-user-id',
           }
-        });
+        }, justSignedUp);
       }
       setLoading(false);
       return;
@@ -81,7 +83,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
         
         // Supabase returns a user, but it may require email verification
         if (data.user && data.session) {
-          onAuthSuccess(data.session);
+          onAuthSuccess(data.session, true);
         } else {
           setSuccessMsg('Sign up successful! Please check your student email to confirm registration.');
           setIsSignUp(false);
@@ -95,7 +97,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
 
         if (error) throw error;
         if (data.session) {
-          onAuthSuccess(data.session);
+          onAuthSuccess(data.session, false);
         }
       }
     } catch (err: any) {

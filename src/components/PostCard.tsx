@@ -15,6 +15,7 @@ export interface PostCardProps {
   likesCount?: number;
   commentsCount?: number;
   onAvatarClick?: (username: string) => void;
+  status?: 'pending' | 'approved' | 'rejected' | 'archived';
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
@@ -29,6 +30,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   likesCount = 42,
   commentsCount = 8,
   onAvatarClick,
+  status,
 }) => {
   const [isLiked, setIsLiked] = useState(false); 
   const [isSaved, setIsSaved] = useState(false); 
@@ -194,8 +196,19 @@ export const PostCard: React.FC<PostCardProps> = ({
             >
               {displayName || username}
             </button>
-            <span className="text-[12px] text-slate-400 dark:text-slate-500">
+            <span className="text-[12px] text-slate-400 dark:text-slate-500 flex items-center flex-wrap gap-1.5">
               @{username} • {timestamp}
+              {status && status !== 'approved' && (
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                  status === 'pending'
+                    ? 'bg-amber-100 text-amber-850 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/20'
+                    : status === 'rejected'
+                      ? 'bg-red-100 text-red-850 dark:bg-red-950/40 dark:text-red-400 border border-red-200/20'
+                      : 'bg-slate-100 text-slate-800 dark:bg-slate-900/60 dark:text-slate-400 border border-slate-200/20'
+                }`}>
+                  {status === 'pending' ? 'Pending Review' : status}
+                </span>
+              )}
             </span>
           </div>
         </div>

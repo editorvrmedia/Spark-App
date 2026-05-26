@@ -7,6 +7,7 @@ import { CreatePost } from './components/CreatePost';
 import { AppNavigation, NavTab } from './components/AppNavigation';
 import { Search, LogOut, Loader2, X, Sparkles } from 'lucide-react';
 import { supabase } from './lib/supabaseClient';
+import { ProfileOnboarding } from './components/ProfileOnboarding';
 
 function App() {
   const [session, setSession] = useState<any>(null);
@@ -19,6 +20,10 @@ function App() {
     if (saved === 'dark' || saved === 'light') return saved;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
+
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [feedRefetchTrigger, setFeedRefetchTrigger] = useState(0);
 
   // Explore search states
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,26 +73,41 @@ function App() {
     if (!isSupabaseConfigured || !session) {
       if (!session) {
         setIsAdmin(false);
+        setCurrentProfileId(null);
       } else {
         const mockEmail = session.user?.email || '';
         const whitelistedMails = ['admin1@stbrittosacademy.edu.in', 'admin2@stbrittosacademy.edu.in'];
         setIsAdmin(whitelistedMails.includes(mockEmail.toLowerCase()));
+        setCurrentProfileId('auth-2'); // default to alex_dev in mock sandbox
       }
       return;
     }
 
     async function loadRoleAndAdminStatus() {
       try {
-        // Call the is_admin() RPC to verify access
-        const { data: isAdminResult, error: rpcError } = await supabase.rpc('is_admin');
-        if (!rpcError && isAdminResult !== undefined) {
-          setIsAdmin(!!isAdminResult);
+        // Resolve profile ID and role
+        const { data: profileRow } = await supabase
+          .from('profiles')
+          .select('id, role, bio')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (profileRow) {
+          setCurrentProfileId(profileRow.id);
+          setIsAdmin(profileRow.role === 'admin');
+
+          const hasCompletedOnboarding = localStorage.getItem(`spark-onboarded-${profileRow.id}`);
+          if (!profileRow.bio && !hasCompletedOnboarding) {
+            setShowOnboarding(true);
+          }
         } else {
+          setCurrentProfileId(null);
           setIsAdmin(false);
         }
       } catch (err) {
         console.error('Failed to load session profile role or admin status:', err);
         setIsAdmin(false);
+        setCurrentProfileId(null);
       }
     }
 
@@ -225,8 +245,33 @@ function App() {
   if (!session) {
     return (
       <Auth 
-        onAuthSuccess={(sess) => setSession(sess)} 
-        onBypass={() => setSession({ user: { email: 'sandbox@stbrittosacademy.edu.in' } })}
+        onAuthSuccess={(sess, isNew) => {
+          setSession(sess);
+          if (isNew) {
+            setShowOnboarding(true);
+          }
+        }} 
+        onBypass={() => {
+          setSession({ user: { email: 'sandbox@stbrittosacademy.edu.in' } });
+          setShowOnboarding(true);
+        }}
+      />
+    );
+  }
+
+  // Render onboarding wizard if showOnboarding is true
+  if (showOnboarding) {
+    return (
+      <ProfileOnboarding 
+        session={session} 
+        currentProfileId={currentProfileId}
+        onComplete={() => {
+          if (currentProfileId) {
+            localStorage.setItem(`spark-onboarded-${currentProfileId}`, 'true');
+          }
+          setShowOnboarding(false);
+          setActiveTab('home');
+        }}
       />
     );
   }
@@ -252,6 +297,8 @@ function App() {
                 onOpenNotifications={() => setActiveOverlay('notifications')}
                 onOpenActivity={() => setActiveOverlay('activity')}
                 onOpenMessages={() => setActiveOverlay('messages')}
+                currentProfileId={currentProfileId}
+                feedRefetchTrigger={feedRefetchTrigger}
               />
             )}
             {activeTab === 'admin' && (
@@ -484,6 +531,7 @@ function App() {
       <CreatePost 
         isOpen={isCreatePostOpen}
         onClose={() => setIsCreatePostOpen(false)}
+        onPostCreated={() => setFeedRefetchTrigger(prev => prev + 1)}
       />
 
       {/* Glassmorphic Overlays (Notifications, Activity, DMs) */}

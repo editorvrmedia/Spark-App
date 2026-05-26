@@ -1,137 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { supabase } from '../lib/supabaseClient';
 import { PostCard } from './PostCard';
 import { SparkLogo } from './SparkLogo';
-import { Database } from '../types/database';
 import { AlertTriangle, RefreshCw, Sparkles, Bell, Heart, ShieldAlert } from 'lucide-react';
 
-type DBPost = Database['public']['Tables']['posts']['Row'];
-type DBProfile = Database['public']['Tables']['profiles']['Row'];
-
-interface PostWithAuthor extends DBPost {
-  author: DBProfile | null;
-}
-
-const PAGE_SIZE = 5;
-
-// Mock posts specifically matching the user's design image
-const MOCK_POSTS: PostWithAuthor[] = [
-  {
-    id: '1',
-    author_id: 'auth-1',
-    title: 'Welcome to Spark Social Feed (Page 1)',
-    body: 'We are thrilled to launch the new Spark App feed. This interface is built with React, TypeScript, and Tailwind CSS. Double tap cards to like, and experience smooth interactions. Enjoy the glassmorphic aesthetics!',
-    media_urls: ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop'],
-    image_url: null,
-    status: 'approved',
-    rejection_reason: null,
-    is_nsfw: false,
-    is_pinned: true,
-    deleted_at: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    published_at: new Date().toISOString(),
-    author: {
-      id: 'auth-1',
-      user_id: 'user-1',
-      username: 'spark_team',
-      display_name: 'Spark Team',
-      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop',
-      bio: 'Spark core developers.',
-      role: 'admin',
-      is_suspended: false,
-      suspension_reason: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      deleted_at: null,
-    }
-  },
-  {
-    id: '2',
-    author_id: 'auth-2',
-    title: 'Frontend Optimization with Tailwind & Vite',
-    body: 'Just finished profiling our bundle sizes. By utilizing postCSS, Autoprefixer, and Vite path aliases, we kept our bundle sizes incredibly small while building custom glassmorphism styles directly in tailwind.css.',
-    media_urls: [],
-    image_url: null,
-    status: 'approved',
-    rejection_reason: null,
-    is_nsfw: false,
-    is_pinned: false,
-    deleted_at: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    published_at: new Date().toISOString(),
-    author: {
-      id: 'auth-2',
-      user_id: 'user-2',
-      username: 'spark_team',
-      display_name: 'Alex Rivera',
-      avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
-      bio: 'Frontend Engineer @ Spark.',
-      role: 'user',
-      is_suspended: false,
-      suspension_reason: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      deleted_at: null,
-    }
-  }
-];
-
-const fetchPostsPage = async (pageParam: number): Promise<PostWithAuthor[]> => {
-  const isSupabaseConfigured =
-    import.meta.env.VITE_SUPABASE_URL &&
-    import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
-
-  if (!isSupabaseConfigured) {
-    await new Promise(resolve => setTimeout(resolve, 600));
-    if (pageParam >= 3) return [];
-    
-    return MOCK_POSTS.map((post, idx) => ({
-      ...post,
-      id: `mock-${pageParam}-${idx}`,
-      title: pageParam === 0 ? post.title : `${post.title} (Page ${pageParam + 1})`,
-      created_at: 'today'
-    }));
-  }
-
-  const from = pageParam * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
-
-  const { data, error } = await supabase
-    .from('posts')
-    .select(`
-      *,
-      author:profiles (
-        id,
-        user_id,
-        username,
-        display_name,
-        avatar_url,
-        bio,
-        role,
-        is_suspended,
-        suspension_reason,
-        created_at,
-        updated_at,
-        deleted_at
-      )
-    `)
-    .eq('status', 'approved')
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-    .range(from, to);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return (data || []).map((post: any) => ({
-    ...post,
-    author: Array.isArray(post.author) ? post.author[0] : post.author
-  })) as PostWithAuthor[];
-};
+import { fetchPosts } from '../lib/api';
 
 export interface FeedProps {
   theme: 'light' | 'dark';
@@ -141,6 +14,8 @@ export interface FeedProps {
   onOpenNotifications?: () => void;
   onOpenActivity?: () => void;
   onOpenMessages?: () => void;
+  currentProfileId: string | null;
+  feedRefetchTrigger?: number;
 }
 
 export const Feed: React.FC<FeedProps> = ({ 
@@ -150,7 +25,9 @@ export const Feed: React.FC<FeedProps> = ({
   onSelectUser,
   onOpenNotifications,
   onOpenActivity,
-  onOpenMessages
+  onOpenMessages,
+  currentProfileId,
+  feedRefetchTrigger
 }) => {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -163,13 +40,19 @@ export const Feed: React.FC<FeedProps> = ({
     status,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ['approved_posts'],
-    queryFn: ({ pageParam = 0 }) => fetchPostsPage(pageParam as number),
+    queryKey: ['posts', currentProfileId],
+    queryFn: ({ pageParam = 0 }) => fetchPosts(pageParam as number, currentProfileId, 5),
     initialPageParam: 0,
     getNextPageParam: (lastPage, _, lastPageParam) => {
-      return lastPage.length === MOCK_POSTS.length ? (lastPageParam as number) + 1 : undefined;
+      return lastPage.length === 5 ? (lastPageParam as number) + 1 : undefined;
     },
   });
+
+  useEffect(() => {
+    if (feedRefetchTrigger !== undefined && feedRefetchTrigger > 0) {
+      refetch();
+    }
+  }, [feedRefetchTrigger, refetch]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -307,7 +190,9 @@ export const Feed: React.FC<FeedProps> = ({
         {status === 'success' && (
           <>
             {data.pages.flatMap(page => page).map((post, idx) => {
-              const dateStr = post.created_at === 'today' ? 'today' : 'today';
+              const dateStr = post.created_at.includes('-') 
+                ? new Date(post.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+                : post.created_at;
               return (
                 <PostCard
                   key={post.id}
@@ -322,6 +207,7 @@ export const Feed: React.FC<FeedProps> = ({
                   likesCount={idx === 0 ? 42 : 15}
                   commentsCount={idx === 0 ? 8 : 3}
                   onAvatarClick={onSelectUser}
+                  status={post.status}
                 />
               );
             })}
