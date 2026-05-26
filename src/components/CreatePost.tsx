@@ -185,7 +185,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostC
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col gap-4 animate-[scaleUp_0.15s_cubic-bezier(0.16,_1,_0.3,_1)] text-left">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col gap-4 animate-[scaleUp_0.35s_cubic-bezier(0.34,1.56,0.64,1)] text-left">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-50">
@@ -195,7 +195,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostC
             type="button" 
             onClick={onClose}
             disabled={isSubmitting}
-            className="text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-9 h-9 flex items-center justify-center focus:outline-none"
+            className="text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 ease-spring hover:scale-110 active:scale-90 w-9 h-9 flex items-center justify-center focus:outline-none"
           >
             <X className="w-5 h-5" />
           </button>
@@ -314,7 +314,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostC
             <button
               type="submit"
               disabled={!body.trim() || isUploading || isSubmitting}
-              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 text-white font-bold rounded-full text-xs transition-all duration-200 flex items-center gap-1.5 focus:outline-none shadow-sm active:scale-95"
+              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 text-white font-bold rounded-full text-xs transition-all duration-300 ease-spring hover:scale-105 active:scale-95 focus:outline-none shadow-sm"
             >
               {isSubmitting ? (
                 <>

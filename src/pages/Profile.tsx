@@ -381,10 +381,10 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
       <div className="flex border-b border-slate-100 dark:border-slate-900/80 bg-white/50 dark:bg-slate-900/30">
         <button
           onClick={() => setActiveTab('posts')}
-          className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-2 border-b-2 transition-all ${
+          className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-2 border-b-2 transition-all duration-300 ease-spring active:scale-95 focus:outline-none ${
             activeTab === 'posts'
               ? 'border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-400'
-              : 'border-transparent text-slate-400 hover:text-slate-650'
+              : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
           }`}
         >
           <Grid className="w-4 h-4" />
@@ -392,10 +392,10 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
         </button>
         <button
           onClick={() => setActiveTab('achievements')}
-          className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-2 border-b-2 transition-all ${
+          className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-2 border-b-2 transition-all duration-300 ease-spring active:scale-95 focus:outline-none ${
             activeTab === 'achievements'
               ? 'border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-400'
-              : 'border-transparent text-slate-400 hover:text-slate-650'
+              : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
           }`}
         >
           <Award className="w-4 h-4" />
@@ -487,14 +487,14 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
       {/* Edit Profile Modal */}
       {isEditOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col gap-4 animate-[scaleUp_0.15s_cubic-bezier(0.16,_1,_0.3,_1)]">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col gap-4 animate-[scaleUp_0.35s_cubic-bezier(0.34,1.56,0.64,1)]">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
               <span className="font-extrabold text-slate-900 dark:text-slate-50 text-base">
                 Edit Profile
               </span>
               <button 
                 onClick={() => setIsEditOpen(false)}
-                className="text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 p-1"
+                className="text-slate-400 hover:text-slate-650 dark:hover:text-slate-205 transition-all duration-300 ease-spring hover:scale-110 active:scale-90 p-1 focus:outline-none"
               >
                 <X className="w-5 h-5" />
               </button>

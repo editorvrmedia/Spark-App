@@ -133,11 +133,18 @@ const fetchPostsPage = async (pageParam: number): Promise<PostWithAuthor[]> => {
 };
 
 export interface FeedProps {
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
   onNavigateToAdmin?: () => void;
   onSelectUser?: (username: string) => void;
 }
 
-export const Feed: React.FC<FeedProps> = ({ onNavigateToAdmin, onSelectUser }) => {
+export const Feed: React.FC<FeedProps> = ({ 
+  theme,
+  onToggleTheme,
+  onNavigateToAdmin,
+  onSelectUser 
+}) => {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const {
@@ -195,19 +202,33 @@ export const Feed: React.FC<FeedProps> = ({ onNavigateToAdmin, onSelectUser }) =
 
   return (
     <div className="flex flex-col items-center w-full">
-      {/* Fixed Sticky Header */}
-      <header className="sticky top-0 z-50 w-full bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/40 px-5 py-3 flex items-center justify-between shadow-sm">
-        <h1 className="text-3xl font-extrabold text-[#D946EF] dark:text-[#E879F9] tracking-tight font-sans select-none">
+      {/* Fixed Sticky Glassmorphic Header */}
+      <header className="sticky top-0 z-50 w-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/40 px-5 py-3.5 flex items-center justify-between shadow-sm">
+        <h1 className="text-3xl font-extrabold text-[#D946EF] dark:text-[#E879F9] tracking-tight font-sans select-none animate-fade-in">
           Spark
         </h1>
         
         {/* Header Icons on Top-Right */}
-        <div className="flex items-center gap-5 text-slate-800 dark:text-slate-200">
+        <div className="flex items-center gap-4 text-slate-850 dark:text-slate-200">
+          {/* Theme switcher */}
+          <button
+            onClick={onToggleTheme}
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 transition-all duration-300 ease-spring active:scale-90 text-slate-700 dark:text-slate-300 focus:outline-none"
+            aria-label="Toggle Theme"
+            title="Toggle Dark/Light Mode"
+          >
+            {theme === 'dark' ? (
+              <svg className="w-5.5 h-5.5 text-amber-500 fill-amber-500/20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+            ) : (
+              <svg className="w-5.5 h-5.5 text-indigo-600 fill-indigo-600/10" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            )}
+          </button>
+
           {/* Moderator Guard shortcut icon */}
           {onNavigateToAdmin && (
             <button 
               onClick={onNavigateToAdmin} 
-              className="text-[#7C3AED] dark:text-[#A78BFA] hover:opacity-80 transition-opacity" 
+              className="text-[#7C3AED] dark:text-[#A78BFA] hover:scale-110 active:scale-95 transition-all duration-300 ease-spring" 
               aria-label="Moderator Queue"
               title="Moderator Dashboard"
             >
@@ -215,15 +236,15 @@ export const Feed: React.FC<FeedProps> = ({ onNavigateToAdmin, onSelectUser }) =
             </button>
           )}
 
-          <button className="hover:text-purple-600 transition-colors" aria-label="Notifications">
+          <button className="hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring" aria-label="Notifications">
             <Bell className="w-[26px] h-[26px]" strokeWidth={1.5} />
           </button>
           
-          <button className="hover:text-purple-600 transition-colors" aria-label="Activity">
+          <button className="hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring" aria-label="Activity">
             <Heart className="w-[26px] h-[26px]" strokeWidth={1.5} />
           </button>
           
-          <button className="hover:text-purple-600 transition-colors" aria-label="Direct Messages">
+          <button className="hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring" aria-label="Direct Messages">
             {/* Messenger Chat Icon */}
             <svg 
               viewBox="0 0 24 24" 

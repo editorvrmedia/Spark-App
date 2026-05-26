@@ -97,7 +97,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
     <button
       onClick={handleFollowToggle}
       disabled={toggling}
-      className={`px-4 py-1.5 rounded-full text-xs font-extrabold transition-all active:scale-95 flex items-center gap-1.5 ${
+      className={`px-4 py-1.5 rounded-full text-xs font-extrabold transition-all duration-300 ease-spring hover:scale-105 active:scale-90 focus:outline-none flex items-center gap-1.5 ${
         isFollowing
           ? 'bg-slate-150 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800'
           : 'bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-500/10'
