@@ -272,9 +272,11 @@ function App() {
       <ProfileOnboarding 
         session={session} 
         currentProfileId={currentProfileId}
-        onComplete={() => {
-          if (currentProfileId) {
-            localStorage.setItem(`spark-onboarded-${currentProfileId}`, 'true');
+        onComplete={(newProfileId) => {
+          const idToUse = newProfileId || currentProfileId;
+          if (idToUse) {
+            localStorage.setItem(`spark-onboarded-${idToUse}`, 'true');
+            setCurrentProfileId(idToUse);
           }
           setShowOnboarding(false);
           setActiveTab('home');

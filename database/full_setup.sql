@@ -520,7 +520,14 @@ DROP POLICY IF EXISTS profiles_select_public ON public.profiles;
 CREATE POLICY profiles_select_public ON public.profiles FOR SELECT USING (deleted_at IS NULL);
 
 DROP POLICY IF EXISTS profiles_update_own ON public.profiles;
-CREATE POLICY profiles_update_own ON public.profiles FOR UPDATE USING ((current_profile()).user_id = user_id);
+CREATE POLICY profiles_update_own ON public.profiles FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS profiles_insert_own ON public.profiles;
+CREATE POLICY profiles_insert_own ON public.profiles FOR INSERT WITH CHECK (
+    auth.uid() = user_id
+    AND role = 'user'::public.user_role
+    AND is_suspended = FALSE
+);
 
 DROP POLICY IF EXISTS profiles_insert_admin ON public.profiles;
 CREATE POLICY profiles_insert_admin ON public.profiles FOR INSERT WITH CHECK ((current_profile()).role = 'admin');

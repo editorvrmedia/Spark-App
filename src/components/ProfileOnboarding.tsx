@@ -5,7 +5,7 @@ import { Loader2, Sparkles, User, FileText, CheckCircle2 } from 'lucide-react';
 interface ProfileOnboardingProps {
   session: any;
   currentProfileId: string | null;
-  onComplete: () => void;
+  onComplete: (newProfileId?: string) => void;
 }
 
 const PRESET_AVATARS = [
@@ -89,38 +89,68 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
     }
 
     try {
-      // 1. Update Profile in Database
-      const { error: updateError } = await supabase
+      // 1. Check if profile exists first to handle trigger fallback
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .update({
-          display_name: displayName.trim(),
-          bio: bio.trim(),
-          avatar_url: selectedAvatar,
-        })
-        .eq('user_id', session.user.id);
+        .select('id')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
 
-      if (updateError) throw updateError;
+      let resolvedProfileId = existingProfile?.id;
 
-      // 2. Award Welcoming Achievement "First Spark" inside Database
-      const resolvedProfileId = currentProfileId || (
-        await supabase
+      if (existingProfile) {
+        // Update existing profile
+        const { error: updateError } = await supabase
           .from('profiles')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .single()
-      ).data?.id;
+          .update({
+            display_name: displayName.trim(),
+            bio: bio.trim(),
+            avatar_url: selectedAvatar,
+          })
+          .eq('user_id', session.user.id);
 
-      if (resolvedProfileId) {
-        await supabase.from('achievements').insert({
-          profile_id: resolvedProfileId,
-          badge_type: 'contributor',
-          title: 'Early Sparkler',
-          description: 'Successfully completed initial student profile setup wizard.',
-        });
+        if (updateError) throw updateError;
+      } else {
+        // Insert missing profile
+        const fallbackUsername = session.user.user_metadata?.username || 
+          'user_' + session.user.id.replace(/-/g, '').slice(0, 8);
+        
+        const { data: insertedData, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: session.user.id,
+            username: fallbackUsername,
+            display_name: displayName.trim(),
+            bio: bio.trim(),
+            avatar_url: selectedAvatar,
+            role: 'user',
+            is_suspended: false,
+          })
+          .select('id')
+          .single();
+
+        if (insertError) throw insertError;
+        resolvedProfileId = insertedData?.id;
+      }
+
+      // 2. Award Welcoming Achievement "Early Sparkler" inside Database
+      const finalProfileId = currentProfileId || resolvedProfileId;
+
+      if (finalProfileId) {
+        try {
+          await supabase.from('achievements').insert({
+            profile_id: finalProfileId,
+            badge_type: 'contributor',
+            title: 'Early Sparkler',
+            description: 'Successfully completed initial student profile wizard.',
+          });
+        } catch (achievementErr) {
+          console.error('Failed to insert onboarding achievement:', achievementErr);
+        }
       }
 
       setSaving(false);
-      onComplete();
+      onComplete(finalProfileId || undefined);
     } catch (err: any) {
       setErrorMsg(err.message || 'Setup saving failed. Please check connection.');
       setSaving(false);
