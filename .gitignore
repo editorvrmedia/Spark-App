@@ -38,3 +38,7 @@ Thumbs.db
 
 # AI Agents config
 .gemini/
+
+# Capacitor native projects (auto-generated from dist/)
+android/
+ios/

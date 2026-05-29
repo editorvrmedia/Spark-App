@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Database } from '../types/database';
-import { Check, X, ShieldAlert, RefreshCw, AlertCircle } from 'lucide-react';
+import { Check, X, ShieldAlert, RefreshCw, AlertCircle, AlertTriangle, Zap } from 'lucide-react';
+import { computeHeuristicScore, getRiskColor, getRiskBg, getRiskLabel, ModerationScore } from '../lib/moderation';
+
 
 type DBPost = Database['public']['Tables']['posts']['Row'];
 type DBProfile = Database['public']['Tables']['profiles']['Row'];
@@ -80,11 +82,13 @@ const INITIAL_MOCK_PENDING: PostWithAuthor[] = [
 ];
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome, userEmail }) => {
-  const [currentUserRole, setCurrentUserRole] = useState<'user' | 'moderator' | 'admin'>('moderator'); // Default to moderator for simulation
+  const [currentUserRole, setCurrentUserRole] = useState<'user' | 'moderator' | 'admin'>('moderator');
   const [pendingPosts, setPendingPosts] = useState<PostWithAuthor[]>([]);
+  const [riskScores, setRiskScores] = useState<Record<string, ModerationScore>>({});
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+
 
   // Check database configuration
   const isSupabaseConfigured =
@@ -112,9 +116,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome
         }
 
         setCurrentUserRole('admin');
-        setPendingPosts(INITIAL_MOCK_PENDING);
+        const posts = INITIAL_MOCK_PENDING;
+        setPendingPosts(posts);
+        // Compute risk scores for mock posts
+        const scores: Record<string, ModerationScore> = {};
+        posts.forEach(p => { scores[p.id] = computeHeuristicScore(p.title, p.body); });
+        setRiskScores(scores);
         setLoading(false);
         return;
+
       }
 
       try {
@@ -226,6 +236,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome
       })) as PostWithAuthor[];
 
       setPendingPosts(formatted);
+
+      // Compute ML risk scores for all fetched posts
+      const scores: Record<string, ModerationScore> = {};
+      formatted.forEach(p => { scores[p.id] = computeHeuristicScore(p.title, p.body); });
+      setRiskScores(scores);
+
     } catch (err: any) {
       console.error('Error fetching queue:', err.message);
       setErrorMsg('Failed to update the queue.');
@@ -379,7 +395,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome
                   </p>
                 </div>
 
+                {/* ML Risk Score Badge */}
+                {riskScores[post.id] && (
+                  <div className={`flex items-start gap-2.5 p-3 rounded-2xl border text-left ${getRiskBg(riskScores[post.id].level)}`}>
+                    <div className="flex-shrink-0 mt-0.5">
+                      {riskScores[post.id].level === 'high' ? (
+                        <AlertTriangle className={`w-4 h-4 ${getRiskColor(riskScores[post.id].level)}`} />
+                      ) : riskScores[post.id].level === 'medium' ? (
+                        <Zap className={`w-4 h-4 ${getRiskColor(riskScores[post.id].level)}`} />
+                      ) : (
+                        <Check className={`w-4 h-4 ${getRiskColor(riskScores[post.id].level)}`} />
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[11px] font-extrabold ${getRiskColor(riskScores[post.id].level)}`}>
+                          {getRiskLabel(riskScores[post.id].level)}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          Score: {(riskScores[post.id].score * 100).toFixed(0)}% · {riskScores[post.id].source}
+                        </span>
+                      </div>
+                      {riskScores[post.id].flags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {riskScores[post.id].flags.map((flag, i) => (
+                            <span key={i} className="text-[9px] bg-white/60 dark:bg-slate-900/40 border border-current/20 px-2 py-0.5 rounded-full font-semibold opacity-80">
+                              {flag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Auto-escalation warning */}
+                {riskScores[post.id]?.level === 'high' && (
+                  <div className="flex items-center gap-2 bg-red-100 dark:bg-red-950/30 border border-red-200 dark:border-red-800 px-3 py-2 rounded-xl">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                    <span className="text-[10px] font-bold text-red-600 dark:text-red-400">⚠️ Auto-escalated for senior review — high-risk content detected</span>
+                  </div>
+                )}
+
                 {/* Post Media Preview */}
+
                 {(post.image_url || (post.media_urls && post.media_urls.length > 0)) && (
                   <div className="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-950">
                     <img 

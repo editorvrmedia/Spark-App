@@ -5,9 +5,13 @@ import { Profile } from './pages/Profile';
 import { Auth } from './pages/Auth';
 import { CreatePost } from './components/CreatePost';
 import { AppNavigation, NavTab } from './components/AppNavigation';
-import { Search, LogOut, Loader2, X, Sparkles } from 'lucide-react';
+import { NotificationsOverlay } from './components/NotificationsOverlay';
+import { MessagesOverlay } from './components/MessagesOverlay';
+import { Search, LogOut, Loader2 } from 'lucide-react';
+
 import { supabase } from './lib/supabaseClient';
 import { ProfileOnboarding } from './components/ProfileOnboarding';
+
 
 function App() {
   const [session, setSession] = useState<any>(null);
@@ -32,7 +36,10 @@ function App() {
   const [searchLoading, setSearchLoading] = useState(false);
 
   // Overlay state: notifications, activity, messages
-  const [activeOverlay, setActiveOverlay] = useState<'notifications' | 'activity' | 'messages' | null>(null);
+  const [activeOverlay, setActiveOverlay] = useState<'notifications' | 'messages' | null>(null);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+  const [unreadMsgCount, setUnreadMsgCount] = useState(0);
+
 
   // Sync theme to root class
   useEffect(() => {
@@ -295,12 +302,14 @@ function App() {
                 onNavigateToAdmin={isAdmin ? () => handleTabChange('admin') : undefined} 
                 onSelectUser={(username) => setViewedUsername(username)}
                 onOpenNotifications={() => setActiveOverlay('notifications')}
-                onOpenActivity={() => setActiveOverlay('activity')}
                 onOpenMessages={() => setActiveOverlay('messages')}
                 currentProfileId={currentProfileId}
                 feedRefetchTrigger={feedRefetchTrigger}
+                unreadNotifCount={unreadNotifCount}
+                unreadMsgCount={unreadMsgCount}
               />
             )}
+
             {activeTab === 'admin' && (
               <AdminDashboard onRedirectToHome={() => handleTabChange('home')} userEmail={session?.user?.email} />
             )}
@@ -534,127 +543,26 @@ function App() {
         onPostCreated={() => setFeedRefetchTrigger(prev => prev + 1)}
       />
 
-      {/* Glassmorphic Overlays (Notifications, Activity, DMs) */}
-      {activeOverlay && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col gap-4 animate-[scaleUp_0.35s_cubic-bezier(0.34,1.56,0.64,1)] text-left max-h-[85vh]">
-            {/* Overlay Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h2 className="text-sm font-extrabold text-slate-900 dark:text-slate-50 uppercase tracking-wider pl-0.5">
-                {activeOverlay === 'notifications' && 'Notifications'}
-                {activeOverlay === 'activity' && 'Recent Activity'}
-                {activeOverlay === 'messages' && 'Direct Messages'}
-              </h2>
-              <button 
-                onClick={() => setActiveOverlay(null)}
-                className="text-slate-400 hover:text-slate-650 dark:hover:text-slate-205 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 ease-spring hover:scale-110 active:scale-90 w-8 h-8 flex items-center justify-center focus:outline-none"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* Real Notifications Overlay */}
+      <NotificationsOverlay
+        isOpen={activeOverlay === 'notifications'}
+        onClose={() => setActiveOverlay(null)}
+        currentProfileId={currentProfileId}
+        onUnreadCountChange={setUnreadNotifCount}
+        onNavigateToProfile={(username) => { setViewedUsername(username); setActiveTab('home'); }}
+      />
 
-            {/* Content list */}
-            <div className="flex-grow overflow-y-auto flex flex-col gap-3 py-1">
-              {activeOverlay === 'notifications' && (
-                <div className="flex flex-col gap-3">
-                  {[
-                    { id: 1, text: 'Alex Rivera followed your profile.', time: '10m ago', type: 'follow' },
-                    { id: 2, text: 'Spark Team approved your spark "Frontend Optimization".', time: '1h ago', type: 'approve' },
-                    { id: 3, text: 'Your account was verified as a Student Leader!', time: '1d ago', type: 'system' }
-                  ].map(n => (
-                    <div key={n.id} className="flex gap-3 items-start border-b border-slate-50 dark:border-slate-850/30 pb-3 last:border-0 last:pb-0">
-                      <div className="p-2 bg-purple-50 dark:bg-purple-950/30 rounded-xl text-purple-650 dark:text-purple-400 mt-0.5">
-                        <Sparkles className="w-4 h-4" />
-                      </div>
-                      <div className="flex flex-col gap-0.5 text-left">
-                        <p className="text-[12px] text-slate-700 dark:text-slate-300 font-semibold leading-relaxed">{n.text}</p>
-                        <span className="text-[9px] text-slate-405 font-bold">{n.time}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {activeOverlay === 'activity' && (
-                <div className="flex flex-col gap-3">
-                  {[
-                    { id: 1, name: 'Elena Rostova', user: 'travel_bug', action: 'liked your spark "Kyoto Sunset"', time: '5m ago' },
-                    { id: 2, name: 'Bob Spammer', user: 'crypto_bob', action: 'liked your spark "Welcome to Spark"', time: '20m ago' },
-                    { id: 3, name: 'Alex Rivera', user: 'alex_dev', action: 'liked your spark "Kyoto Sunset"', time: '1h ago' }
-                  ].map(a => (
-                    <div key={a.id} className="flex items-center justify-between border-b border-slate-50 dark:border-slate-850/30 pb-3 last:border-0 last:pb-0">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-850 flex items-center justify-center font-bold text-[10px] text-slate-550">
-                          {a.name.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div className="flex flex-col text-left">
-                          <p className="text-[11px] text-slate-800 dark:text-slate-200 font-bold leading-none">
-                            {a.name} <span className="text-slate-400 font-normal text-[9px]">@{a.user}</span>
-                          </p>
-                          <span className="text-[10px] text-slate-500 mt-1">{a.action}</span>
-                        </div>
-                      </div>
-                      <span className="text-[9px] text-slate-400 font-bold">{a.time}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {activeOverlay === 'messages' && (
-                <div className="flex flex-col gap-3 h-64">
-                  {/* Chat messages */}
-                  <div className="flex-1 overflow-y-auto flex flex-col gap-2.5 pr-1">
-                    {[
-                      { id: 1, sender: 'alex_dev', text: 'Hey! Did you check out the new dark mode?', time: '9:30 AM' },
-                      { id: 2, sender: 'self', text: 'Yeah, it looks super sleek! Glassmorphism overlays are awesome.', time: '9:32 AM' },
-                      { id: 3, sender: 'alex_dev', text: 'Awesome! Let me know if you want to push notifications next.', time: '9:33 AM' }
-                    ].map(m => (
-                      <div 
-                        key={m.id} 
-                        className={`flex flex-col max-w-[80%] gap-1 ${
-                          m.sender === 'self' ? 'self-end items-end' : 'self-start items-start'
-                        }`}
-                      >
-                        <div className={`px-3.5 py-2.5 rounded-2xl text-[12px] leading-relaxed ${
-                          m.sender === 'self' 
-                            ? 'bg-purple-650 text-white rounded-br-none shadow-sm' 
-                            : 'bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-350 border border-slate-200/20 dark:border-slate-850/20 rounded-bl-none'
-                        }`}>
-                          {m.text}
-                        </div>
-                        <span className="text-[8px] text-slate-400 font-bold">{m.time}</span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Mock Chat input */}
-                  <div className="flex gap-2 border-t border-slate-100 dark:border-slate-850 pt-3">
-                    <input 
-                      type="text" 
-                      placeholder="Type a message..."
-                      className="flex-grow bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 px-3.5 py-2 rounded-2xl text-xs focus:outline-none focus:border-purple-500 text-slate-800 dark:text-slate-100"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          alert('Message simulation: Sent!');
-                          (e.target as HTMLInputElement).value = '';
-                        }
-                      }}
-                    />
-                    <button 
-                      onClick={() => alert('Message simulation: Sent!')}
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-[10px] font-black tracking-wider uppercase transition-all duration-300 ease-spring active:scale-95 focus:outline-none"
-                    >
-                      Send
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Real Messages Overlay */}
+      <MessagesOverlay
+        isOpen={activeOverlay === 'messages'}
+        onClose={() => setActiveOverlay(null)}
+        currentProfileId={currentProfileId}
+        onUnreadCountChange={setUnreadMsgCount}
+        onNavigateToProfile={(username) => setViewedUsername(username)}
+      />
     </div>
   );
 }
 
 export default App;
+

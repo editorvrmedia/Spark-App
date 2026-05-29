@@ -314,6 +314,54 @@ export interface Database {
           }
         ]
       }
+      notifications: {
+        Row: {
+          id: string
+          recipient_id: string
+          actor_id: string | null
+          type: 'like' | 'comment' | 'follow' | 'post_approved' | 'post_rejected'
+          post_id: string | null
+          message: string | null
+          read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          recipient_id: string
+          actor_id?: string | null
+          type: 'like' | 'comment' | 'follow' | 'post_approved' | 'post_rejected'
+          post_id?: string | null
+          message?: string | null
+          read?: boolean
+          created_at?: string
+        }
+        Update: {
+          read?: boolean
+        }
+        Relationships: []
+      }
+      direct_messages: {
+        Row: {
+          id: string
+          sender_id: string
+          recipient_id: string
+          body: string
+          read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          sender_id: string
+          recipient_id: string
+          body: string
+          read?: boolean
+          created_at?: string
+        }
+        Update: {
+          read?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -358,6 +406,18 @@ export interface Database {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      get_conversations: {
+        Args: { p_profile_id: string }
+        Returns: {
+          other_profile_id: string
+          other_username: string
+          other_display_name: string | null
+          other_avatar_url: string | null
+          last_message: string
+          last_message_at: string
+          unread_count: number
+        }[]
       }
     }
     Enums: {
@@ -433,6 +493,54 @@ export interface Database {
             referencedColumns: ["id"]
           }
         ]
+      }
+      notifications: {
+        Row: {
+          id: string
+          recipient_id: string
+          actor_id: string | null
+          type: 'like' | 'comment' | 'follow' | 'post_approved' | 'post_rejected'
+          post_id: string | null
+          message: string | null
+          read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          recipient_id: string
+          actor_id?: string | null
+          type: 'like' | 'comment' | 'follow' | 'post_approved' | 'post_rejected'
+          post_id?: string | null
+          message?: string | null
+          read?: boolean
+          created_at?: string
+        }
+        Update: {
+          read?: boolean
+        }
+        Relationships: []
+      }
+      direct_messages: {
+        Row: {
+          id: string
+          sender_id: string
+          recipient_id: string
+          body: string
+          read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          sender_id: string
+          recipient_id: string
+          body: string
+          read?: boolean
+          created_at?: string
+        }
+        Update: {
+          read?: boolean
+        }
+        Relationships: []
       }
     }
     Views: {

@@ -550,7 +550,7 @@ CREATE POLICY posts_update_own_content ON public.posts FOR UPDATE USING (
     author_id = (current_profile()).id
     AND status IN ('pending', 'approved')
     AND deleted_at IS NULL
-) WITH CHECK (status = OLD.status);
+);
 
 DROP POLICY IF EXISTS posts_update_status_moderator ON public.posts;
 CREATE POLICY posts_update_status_moderator ON public.posts FOR UPDATE USING (
@@ -626,7 +626,7 @@ DROP POLICY IF EXISTS "Allow Public Select on post-images" ON storage.objects;
 CREATE POLICY "Allow Public Select on post-images" ON storage.objects FOR SELECT USING (bucket_id = 'post-images');
 
 DROP POLICY IF EXISTS "Allow Authenticated Insert on post-images" ON storage.objects;
-CREATE POLICY "Allow Authenticated Insert on post-images" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'post-images' AND auth.uid()::text = owner);
+CREATE POLICY "Allow Authenticated Insert on post-images" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'post-images' AND auth.uid() = owner);
 
 DROP POLICY IF EXISTS "Allow Authenticated Owner Modification on post-images" ON storage.objects;
 CREATE POLICY "Allow Authenticated Owner Modification on post-images" ON storage.objects FOR ALL TO authenticated USING (bucket_id = 'post-images' AND auth.uid() = owner);

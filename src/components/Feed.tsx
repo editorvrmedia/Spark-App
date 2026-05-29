@@ -2,7 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { PostCard } from './PostCard';
 import { SparkLogo } from './SparkLogo';
-import { AlertTriangle, RefreshCw, Sparkles, Bell, Heart, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Sparkles, Bell, ShieldAlert } from 'lucide-react';
+
 
 import { fetchPosts } from '../lib/api';
 
@@ -12,10 +13,11 @@ export interface FeedProps {
   onNavigateToAdmin?: () => void;
   onSelectUser?: (username: string) => void;
   onOpenNotifications?: () => void;
-  onOpenActivity?: () => void;
   onOpenMessages?: () => void;
   currentProfileId: string | null;
   feedRefetchTrigger?: number;
+  unreadNotifCount?: number;
+  unreadMsgCount?: number;
 }
 
 export const Feed: React.FC<FeedProps> = ({ 
@@ -24,10 +26,11 @@ export const Feed: React.FC<FeedProps> = ({
   onNavigateToAdmin,
   onSelectUser,
   onOpenNotifications,
-  onOpenActivity,
   onOpenMessages,
   currentProfileId,
-  feedRefetchTrigger
+  feedRefetchTrigger,
+  unreadNotifCount = 0,
+  unreadMsgCount = 0,
 }) => {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -131,23 +134,20 @@ export const Feed: React.FC<FeedProps> = ({
 
           <button 
             onClick={onOpenNotifications}
-            className="hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring focus:outline-none" 
+            className="relative hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring focus:outline-none" 
             aria-label="Notifications"
           >
             <Bell className="w-[26px] h-[26px]" strokeWidth={1.5} />
-          </button>
-          
-          <button 
-            onClick={onOpenActivity}
-            className="hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring focus:outline-none" 
-            aria-label="Activity"
-          >
-            <Heart className="w-[26px] h-[26px]" strokeWidth={1.5} />
+            {unreadNotifCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center shadow-sm">
+                {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+              </span>
+            )}
           </button>
           
           <button 
             onClick={onOpenMessages}
-            className="hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring focus:outline-none" 
+            className="relative hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring focus:outline-none" 
             aria-label="Direct Messages"
           >
             {/* Messenger Chat Icon */}
@@ -165,6 +165,11 @@ export const Feed: React.FC<FeedProps> = ({
               <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
               <path d="M13 8.5l-4 5.5 2.5-2 1.5 2 4-5.5-2.5 2-1.5-2z" fill="currentColor" stroke="none" />
             </svg>
+            {unreadMsgCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[8px] font-black rounded-full flex items-center justify-center shadow-sm">
+                {unreadMsgCount > 9 ? '9+' : unreadMsgCount}
+              </span>
+            )}
           </button>
         </div>
       </header>

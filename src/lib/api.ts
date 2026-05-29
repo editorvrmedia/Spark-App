@@ -585,3 +585,368 @@ export async function createPost(
     author: Array.isArray(formatted.author) ? formatted.author[0] : formatted.author
   } as PostWithAuthor;
 }
+
+// =============================================================================
+// Notifications API
+// =============================================================================
+
+export interface AppNotification {
+  id: string;
+  recipient_id: string;
+  actor_id: string | null;
+  type: 'like' | 'comment' | 'follow' | 'post_approved' | 'post_rejected';
+  post_id: string | null;
+  message: string | null;
+  read: boolean;
+  created_at: string;
+  actor?: {
+    username: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
+}
+
+const MOCK_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: 'notif-1',
+    recipient_id: 'auth-2',
+    actor_id: 'auth-1',
+    type: 'follow',
+    post_id: null,
+    message: '@spark_team started following you.',
+    read: false,
+    created_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+    actor: { username: 'spark_team', display_name: 'Spark Team', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop' }
+  },
+  {
+    id: 'notif-2',
+    recipient_id: 'auth-2',
+    actor_id: 'auth-1',
+    type: 'like',
+    post_id: 'mock-post-2',
+    message: '@spark_team liked your spark.',
+    read: false,
+    created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+    actor: { username: 'spark_team', display_name: 'Spark Team', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop' }
+  },
+  {
+    id: 'notif-3',
+    recipient_id: 'auth-2',
+    actor_id: null,
+    type: 'post_approved',
+    post_id: 'mock-post-2',
+    message: 'Your spark was approved and is now live!',
+    read: true,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+    actor: null
+  }
+];
+
+export async function fetchNotifications(profileId: string): Promise<AppNotification[]> {
+  const isSupabaseConfigured =
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+  if (!isSupabaseConfigured) {
+    await new Promise(resolve => setTimeout(resolve, 250));
+    return MOCK_NOTIFICATIONS.filter(n => n.recipient_id === profileId);
+  }
+
+  const { data, error } = await supabase
+    .from('notifications')
+    .select(`
+      *,
+      actor:profiles!actor_id (
+        username,
+        display_name,
+        avatar_url
+      )
+    `)
+    .eq('recipient_id', profileId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) throw error;
+  return (data || []).map((n: any) => ({
+    ...n,
+    actor: Array.isArray(n.actor) ? n.actor[0] : n.actor
+  })) as AppNotification[];
+}
+
+export async function markNotificationRead(notificationId: string): Promise<void> {
+  const isSupabaseConfigured =
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+  if (!isSupabaseConfigured) {
+    const n = MOCK_NOTIFICATIONS.find(n => n.id === notificationId);
+    if (n) n.read = true;
+    return;
+  }
+
+  await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('id', notificationId);
+}
+
+export async function markAllNotificationsRead(profileId: string): Promise<void> {
+  const isSupabaseConfigured =
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+  if (!isSupabaseConfigured) {
+    MOCK_NOTIFICATIONS.forEach(n => { if (n.recipient_id === profileId) n.read = true; });
+    return;
+  }
+
+  await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('recipient_id', profileId)
+    .eq('read', false);
+}
+
+export function subscribeToNotifications(
+  profileId: string,
+  onNew: (notification: AppNotification) => void
+) {
+  const isSupabaseConfigured =
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+  if (!isSupabaseConfigured) return () => {};
+
+  const channel = supabase
+    .channel(`notifications:${profileId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `recipient_id=eq.${profileId}`
+      },
+      (payload) => {
+        onNew(payload.new as AppNotification);
+      }
+    )
+    .subscribe();
+
+  return () => { supabase.removeChannel(channel); };
+}
+
+// =============================================================================
+// Direct Messages API
+// =============================================================================
+
+export interface DirectMessage {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  body: string;
+  read: boolean;
+  created_at: string;
+}
+
+export interface Conversation {
+  other_profile_id: string;
+  other_username: string;
+  other_display_name: string | null;
+  other_avatar_url: string | null;
+  last_message: string;
+  last_message_at: string;
+  unread_count: number;
+}
+
+// In-memory mock DM store
+const initMockDMs = (): DirectMessage[] => {
+  const key = 'spark-mock-dms';
+  const stored = sessionStorage.getItem(key);
+  if (!stored) {
+    const defaults: DirectMessage[] = [
+      {
+        id: 'dm-1',
+        sender_id: 'auth-1',
+        recipient_id: 'auth-2',
+        body: 'Hey! Did you check out the new dark mode?',
+        read: true,
+        created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString()
+      },
+      {
+        id: 'dm-2',
+        sender_id: 'auth-2',
+        recipient_id: 'auth-1',
+        body: 'Yeah, looks super sleek! Glassmorphism overlays are 🔥',
+        read: true,
+        created_at: new Date(Date.now() - 1000 * 60 * 28).toISOString()
+      },
+      {
+        id: 'dm-3',
+        sender_id: 'auth-1',
+        recipient_id: 'auth-2',
+        body: 'Awesome! Let me know if you want to push notifications next.',
+        read: false,
+        created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString()
+      }
+    ];
+    sessionStorage.setItem(key, JSON.stringify(defaults));
+    return defaults;
+  }
+  return JSON.parse(stored);
+};
+
+export async function fetchConversations(profileId: string): Promise<Conversation[]> {
+  const isSupabaseConfigured =
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+  if (!isSupabaseConfigured) {
+    await new Promise(resolve => setTimeout(resolve, 250));
+    const dms = initMockDMs();
+    const partnerIds = new Set<string>();
+    dms.forEach(dm => {
+      if (dm.sender_id === profileId) partnerIds.add(dm.recipient_id);
+      if (dm.recipient_id === profileId) partnerIds.add(dm.sender_id);
+    });
+    return Array.from(partnerIds).map(otherId => {
+      const thread = dms.filter(
+        dm => (dm.sender_id === profileId && dm.recipient_id === otherId) ||
+              (dm.sender_id === otherId && dm.recipient_id === profileId)
+      ).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const unread = thread.filter(dm => dm.recipient_id === profileId && !dm.read).length;
+      const partner = MOCK_PROFILES[otherId === 'auth-1' ? 'spark_team' : 'alex_dev'];
+      return {
+        other_profile_id: otherId,
+        other_username: partner?.username || 'unknown',
+        other_display_name: partner?.display_name || null,
+        other_avatar_url: partner?.avatar_url || null,
+        last_message: thread[0]?.body || '',
+        last_message_at: thread[0]?.created_at || new Date().toISOString(),
+        unread_count: unread
+      };
+    });
+  }
+
+  const { data, error } = await supabase.rpc('get_conversations', { p_profile_id: profileId });
+  if (error) throw error;
+  return (data || []) as Conversation[];
+}
+
+export async function fetchMessages(
+  profileId: string,
+  otherProfileId: string,
+  limit = 50
+): Promise<DirectMessage[]> {
+  const isSupabaseConfigured =
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+  if (!isSupabaseConfigured) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const all = initMockDMs();
+    return all.filter(
+      dm => (dm.sender_id === profileId && dm.recipient_id === otherProfileId) ||
+            (dm.sender_id === otherProfileId && dm.recipient_id === profileId)
+    ).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  }
+
+  const { data, error } = await supabase
+    .from('direct_messages')
+    .select('*')
+    .or(
+      `and(sender_id.eq.${profileId},recipient_id.eq.${otherProfileId}),and(sender_id.eq.${otherProfileId},recipient_id.eq.${profileId})`
+    )
+    .order('created_at', { ascending: true })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data || []) as DirectMessage[];
+}
+
+export async function sendMessage(
+  senderId: string,
+  recipientId: string,
+  body: string
+): Promise<DirectMessage> {
+  const isSupabaseConfigured =
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+  if (!isSupabaseConfigured) {
+    await new Promise(resolve => setTimeout(resolve, 150));
+    const all = initMockDMs();
+    const newDM: DirectMessage = {
+      id: `dm-${Date.now()}`,
+      sender_id: senderId,
+      recipient_id: recipientId,
+      body: body.trim(),
+      read: false,
+      created_at: new Date().toISOString()
+    };
+    all.push(newDM);
+    sessionStorage.setItem('spark-mock-dms', JSON.stringify(all));
+    return newDM;
+  }
+
+  const { data, error } = await supabase
+    .from('direct_messages')
+    .insert({ sender_id: senderId, recipient_id: recipientId, body: body.trim() })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as DirectMessage;
+}
+
+export async function markMessagesRead(profileId: string, otherProfileId: string): Promise<void> {
+  const isSupabaseConfigured =
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+  if (!isSupabaseConfigured) {
+    const all = initMockDMs();
+    all.forEach(dm => {
+      if (dm.sender_id === otherProfileId && dm.recipient_id === profileId) dm.read = true;
+    });
+    sessionStorage.setItem('spark-mock-dms', JSON.stringify(all));
+    return;
+  }
+
+  await supabase
+    .from('direct_messages')
+    .update({ read: true })
+    .eq('recipient_id', profileId)
+    .eq('sender_id', otherProfileId)
+    .eq('read', false);
+}
+
+export function subscribeToMessages(
+  profileId: string,
+  onNew: (message: DirectMessage) => void
+) {
+  const isSupabaseConfigured =
+    import.meta.env.VITE_SUPABASE_URL &&
+    import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+  if (!isSupabaseConfigured) return () => {};
+
+  const channel = supabase
+    .channel(`dms:${profileId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'direct_messages',
+        filter: `recipient_id=eq.${profileId}`
+      },
+      (payload) => {
+        onNew(payload.new as DirectMessage);
+      }
+    )
+    .subscribe();
+
+  return () => { supabase.removeChannel(channel); };
+}
+
