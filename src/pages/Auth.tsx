@@ -30,14 +30,8 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
     setErrorMsg(null);
     setSuccessMsg(null);
     
-    // Domain restriction check for sign-up (Backend Architect request)
+    // Domain restriction check for sign-up (Disabled to accept any domain)
     if (isSignUp) {
-      const emailDomain = '@stbrittosacademy.edu.in';
-      if (!email.toLowerCase().endsWith(emailDomain)) {
-        setErrorMsg('Access denied. Please use your official @stbrittosacademy.edu.in student email address to sign up.');
-        return; // Halt before contacting Supabase to keep auth logs clean
-      }
-
       if (username.length < 3) {
         setErrorMsg('Username must be at least 3 characters.');
         return;
@@ -214,13 +208,8 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
           <div className="flex flex-col gap-1">
             <div className="flex justify-between items-center pl-1">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Student Email Address
+                Email Address
               </label>
-              {isSignUp && (
-                <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold uppercase">
-                  domain required
-                </span>
-              )}
             </div>
             <div className="relative">
               <input
@@ -228,7 +217,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 pl-10 pr-3.5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-purple-500 text-slate-850 dark:text-slate-100"
-                placeholder={isSignUp ? "username@stbrittosacademy.edu.in" : "Enter email"}
+                placeholder="Enter email"
                 required
               />
               <Mail className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
