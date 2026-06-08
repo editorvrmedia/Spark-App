@@ -28,6 +28,7 @@ export const Feed: React.FC<FeedProps> = (props) => {
   } = props;
 
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+  const [feedSort, setFeedSort] = useState<'recent' | 'popular'>('recent');
 
   useEffect(() => {
     let active = true;
@@ -130,13 +131,32 @@ export const Feed: React.FC<FeedProps> = (props) => {
   return (
     <div className="flex flex-col items-center w-full">
       {/* Sticky Glassmorphic Header */}
-      <header className="sticky top-0 z-40 w-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/40 px-5 py-4.5 flex items-center justify-between shadow-sm">
-        <h2 className="text-xl font-black text-slate-950 dark:text-slate-50 tracking-tight">
+      <header className="sticky top-0 z-40 w-full bg-white/70 dark:bg-[#0E0E11]/70 backdrop-blur-md border-b border-slate-100 dark:border-slate-900/40 px-5 py-4.5 flex items-center justify-between shadow-sm">
+        <h2 className="text-xl font-bold text-slate-950 dark:text-white tracking-tight">
           Home Feed
         </h2>
-        <span className="text-[10px] font-black text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 px-2.5 py-1.5 rounded-xl uppercase tracking-wider">
-          ✨ Academic Hub
-        </span>
+        <div className="flex items-center bg-slate-100 dark:bg-slate-950/60 p-0.5 rounded-full border border-slate-200/10 gap-0.5 select-none">
+          <button
+            onClick={() => setFeedSort('recent')}
+            className={`px-3 py-1 text-[11px] font-extrabold rounded-full transition-all focus:outline-none ${
+              feedSort === 'recent'
+                ? 'bg-[#e52b86] text-white'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            Recent
+          </button>
+          <button
+            onClick={() => setFeedSort('popular')}
+            className={`px-3 py-1 text-[11px] font-extrabold rounded-full transition-all focus:outline-none ${
+              feedSort === 'popular'
+                ? 'bg-[#e52b86] text-white'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            Popular
+          </button>
+        </div>
       </header>
 
       {/* Feed list */}
@@ -226,12 +246,13 @@ export const Feed: React.FC<FeedProps> = (props) => {
                   avatarUrl={post.author?.avatar_url}
                   username={post.author?.username || 'anonymous'}
                   displayName={post.author?.display_name}
+                  authorBio={post.author?.bio}
                   title={post.title}
                   body={post.body}
                   mediaUrls={post.image_url ? [post.image_url, ...post.media_urls] : post.media_urls}
                   timestamp={dateStr}
-                  likesCount={idx === 0 ? 42 : 15}
-                  commentsCount={idx === 0 ? 8 : 3}
+                  likesCount={(post as any).likes_count !== undefined ? (post as any).likes_count : (idx === 0 ? 42 : 15)}
+                  commentsCount={(post as any).comments_count !== undefined ? (post as any).comments_count : (idx === 0 ? 8 : 3)}
                   onAvatarClick={onSelectUser}
                   status={post.status}
                 />

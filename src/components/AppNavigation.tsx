@@ -1,6 +1,5 @@
 import React from 'react';
-import { Home, User, Search, ShieldAlert, PlusSquare, Bell, MessageSquare, LogOut, Sun, Moon } from 'lucide-react';
-import { SparkLogo } from './SparkLogo';
+import { Home, User, Search, ShieldAlert, Bell, MessageSquare, LogOut, Sun, Moon, Zap } from 'lucide-react';
 
 export type NavTab = 'home' | 'explore' | 'create' | 'profile' | 'admin';
 
@@ -34,15 +33,15 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
   return (
     <>
       {/* PERSISTENT SIDEBAR NAVIGATION */}
-      <aside className="flex flex-col w-64 h-screen sticky top-0 border-r border-slate-100 dark:border-slate-900/50 bg-white/50 dark:bg-slate-950/50 backdrop-blur-md px-4 py-6 justify-between select-none z-40">
+      <aside className="flex flex-col w-64 h-screen sticky top-0 border-r border-slate-100 dark:border-slate-900/40 bg-white/70 dark:bg-[#0E0E11] px-4 py-6 justify-between select-none z-40">
         <div className="flex flex-col gap-8">
           {/* Logo Section */}
           <div
             onClick={() => onTabChange('home')}
             className="flex items-center gap-3 px-3 cursor-pointer select-none active:scale-[0.98] transition-transform"
           >
-            <SparkLogo size={36} className="relative top-[-1px]" />
-            <span className="text-3xl font-black text-[#D946EF] dark:text-[#E879F9] tracking-tighter font-sans bg-gradient-to-r from-pink-500 to-fuchsia-600 bg-clip-text text-transparent">
+            <Zap className="w-8 h-8 text-[#e52b86] fill-[#e52b86] animate-pulse" />
+            <span className="text-3xl font-black text-[#e52b86] tracking-tighter font-sans">
               Spark
             </span>
           </div>
@@ -53,8 +52,8 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
             <button
               onClick={() => onTabChange('home')}
               className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[14px] font-extrabold transition-all duration-200 active:scale-98 focus:outline-none text-left ${activeTab === 'home' && !viewedUsername
-                  ? 'text-purple-600 dark:text-purple-400 bg-purple-50/60 dark:bg-purple-950/15'
-                  : 'text-slate-650 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-900'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
             >
               <Home className="w-5.5 h-5.5" strokeWidth={2} />
@@ -65,8 +64,8 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
             <button
               onClick={() => onTabChange('explore')}
               className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[14px] font-extrabold transition-all duration-200 active:scale-98 focus:outline-none text-left ${activeTab === 'explore'
-                  ? 'text-purple-600 dark:text-purple-400 bg-purple-50/60 dark:bg-purple-950/15'
-                  : 'text-slate-650 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-900'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
             >
               <Search className="w-5.5 h-5.5" strokeWidth={2} />
@@ -76,7 +75,7 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
             {/* Notifications */}
             <button
               onClick={onOpenNotifications}
-              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-[14px] font-extrabold transition-all duration-200 active:scale-98 focus:outline-none text-slate-650 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:text-slate-900 dark:hover:text-slate-200"
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-[14px] font-extrabold transition-all duration-200 active:scale-98 focus:outline-none text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:text-slate-900 dark:hover:text-slate-200"
             >
               <div className="flex items-center gap-3.5">
                 <Bell className="w-5.5 h-5.5" strokeWidth={2} />
@@ -92,7 +91,7 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
             {/* Messages */}
             <button
               onClick={onOpenMessages}
-              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-[14px] font-extrabold transition-all duration-200 active:scale-98 focus:outline-none text-slate-650 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:text-slate-900 dark:hover:text-slate-200"
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-[14px] font-extrabold transition-all duration-200 active:scale-98 focus:outline-none text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:text-slate-900 dark:hover:text-slate-200"
             >
               <div className="flex items-center gap-3.5">
                 <MessageSquare className="w-5.5 h-5.5" strokeWidth={2} />
@@ -108,9 +107,9 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
             {/* Profile */}
             <button
               onClick={() => onTabChange('profile')}
-              className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[14px] font-extrabold transition-all duration-200 active:scale-98 focus:outline-none text-left ${activeTab === 'profile' || (viewedUsername && viewedUsername === 'alex_dev')
-                  ? 'text-purple-600 dark:text-purple-400 bg-purple-50/60 dark:bg-purple-950/15'
-                  : 'text-slate-650 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:text-slate-900 dark:hover:text-slate-200'
+              className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[14px] font-extrabold transition-all duration-200 active:scale-98 focus:outline-none text-left ${activeTab === 'profile' || (viewedUsername && (viewedUsername === 'alex_dev' || viewedUsername === 'j_vane'))
+                  ? 'text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-900'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
             >
               <User className="w-5.5 h-5.5" strokeWidth={2} />
@@ -122,11 +121,11 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
               <button
                 onClick={() => onTabChange('admin')}
                 className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[14px] font-extrabold transition-all duration-200 active:scale-98 focus:outline-none text-left ${activeTab === 'admin'
-                    ? 'text-purple-650 dark:text-purple-400 bg-purple-50/60 dark:bg-purple-950/15'
-                    : 'text-slate-650 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:text-slate-900 dark:hover:text-slate-200'
+                    ? 'text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-900'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
               >
-                <ShieldAlert className="w-5.5 h-5.5 text-purple-500" strokeWidth={2} />
+                <ShieldAlert className="w-5.5 h-5.5 text-[#e52b86]" strokeWidth={2} />
                 <span>Moderator Guard</span>
               </button>
             )}
@@ -135,10 +134,10 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
           {/* Create Post Action */}
           <button
             onClick={() => onTabChange('create')}
-            className="w-full py-3.5 rounded-2xl text-sm font-black bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 transition-all duration-200 active:scale-[0.97] focus:outline-none flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-2xl text-sm font-bold bg-[#e52b86] hover:bg-[#d02478] text-white shadow-lg shadow-pink-500/10 hover:shadow-pink-500/20 transition-all duration-200 active:scale-[0.97] focus:outline-none flex items-center justify-center"
           >
-            <PlusSquare className="w-5 h-5" strokeWidth={2.25} />
-            <span>Create Spark</span>
+            <span className="text-lg font-bold mr-1.5 leading-none">+</span>
+            <span>Post Spark</span>
           </button>
         </div>
 
@@ -148,7 +147,7 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
           {onToggleTheme && (
             <button
               onClick={onToggleTheme}
-              className="flex items-center gap-3.5 px-4 py-2.5 rounded-2xl text-[13px] font-bold text-slate-550 dark:text-slate-450 hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors focus:outline-none text-left"
+              className="flex items-center gap-3.5 px-4 py-2.5 rounded-2xl text-[13px] font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors focus:outline-none text-left"
             >
               {theme === 'dark' ? (
                 <>
@@ -157,7 +156,7 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
                 </>
               ) : (
                 <>
-                  <Moon className="w-5.5 h-5.5 text-indigo-600" />
+                  <Moon className="w-5.5 h-5.5 text-indigo-650" />
                   <span>Dark Mode</span>
                 </>
               )}

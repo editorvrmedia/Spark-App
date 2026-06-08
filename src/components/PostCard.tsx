@@ -8,6 +8,7 @@ export interface PostCardProps {
   avatarUrl?: string | null;
   username: string;
   displayName?: string | null;
+  authorBio?: string | null;
   title: string;
   body: string;
   mediaUrls?: string[];
@@ -18,11 +19,56 @@ export interface PostCardProps {
   status?: 'pending' | 'approved' | 'rejected' | 'archived';
 }
 
+const formatCount = (count: number) => {
+  if (count >= 1000) {
+    return (count / 1000).toFixed(1).replace('.0', '') + 'k';
+  }
+  return count.toString();
+};
+
+const renderParsedBody = (text: string) => {
+  if (!text.includes('```')) {
+    return <p className="text-slate-700 dark:text-slate-300 text-[14px] leading-relaxed whitespace-pre-line">{text}</p>;
+  }
+
+  const parts = text.split('```');
+  return parts.map((part, index) => {
+    if (index % 2 === 1) {
+      // Code block part. The first line might specify the language, e.g. "typescript"
+      const lines = part.split('\n');
+      let language = 'code';
+      let code = part;
+      if (lines[0] && !lines[0].includes(' ') && lines[0].length < 15) {
+        language = lines[0].trim();
+        code = lines.slice(1).join('\n');
+      }
+      return (
+        <div key={index} className="my-3 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 font-mono text-[11px] text-slate-300 shadow-sm relative">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 text-[10px] uppercase font-bold tracking-wider text-slate-400 select-none">
+            <span>{language}</span>
+          </div>
+          <pre className="p-4 overflow-x-auto text-left leading-relaxed">
+            <code className="text-pink-400/90">{code.trim()}</code>
+          </pre>
+        </div>
+      );
+    } else {
+      // Normal text part
+      return part.trim() ? (
+        <p key={index} className="text-slate-700 dark:text-slate-300 text-[14px] leading-relaxed whitespace-pre-line my-1.5">
+          {part}
+        </p>
+      ) : null;
+    }
+  });
+};
+
 export const PostCard: React.FC<PostCardProps> = ({
   postId,
   avatarUrl,
   username,
   displayName,
+  authorBio,
   title,
   body,
   mediaUrls = [],
@@ -190,16 +236,17 @@ export const PostCard: React.FC<PostCardProps> = ({
 
           {/* User Meta */}
           <div className="flex flex-col text-left">
-            <button
-              onClick={() => onAvatarClick?.(username)}
-              className="font-bold text-slate-900 dark:text-slate-50 text-[15px] hover:underline focus:outline-none text-left"
-            >
-              {displayName || username}
-            </button>
-            <span className="text-[12px] text-slate-400 dark:text-slate-500 flex items-center flex-wrap gap-1.5">
-              @{username} • {timestamp}
+            <div className="flex items-center flex-wrap">
+              <button
+                onClick={() => onAvatarClick?.(username)}
+                className="font-bold text-slate-900 dark:text-white hover:underline text-[14px] leading-none text-left"
+              >
+                {displayName || username}
+              </button>
+              <span className="text-slate-400 dark:text-slate-500 text-xs ml-1.5 font-semibold leading-none">@{username}</span>
+              <span className="text-slate-400 dark:text-slate-500 text-xs ml-1.5 font-semibold leading-none">• {timestamp}</span>
               {status && status !== 'approved' && (
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ml-2 ${
                   status === 'pending'
                     ? 'bg-amber-100 text-amber-850 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/20'
                     : status === 'rejected'
@@ -209,7 +256,12 @@ export const PostCard: React.FC<PostCardProps> = ({
                   {status === 'pending' ? 'Pending Review' : status}
                 </span>
               )}
-            </span>
+            </div>
+            {authorBio && (
+              <span className="text-slate-400 dark:text-slate-500 text-[11px] font-bold mt-1.5 leading-none">
+                {authorBio}
+              </span>
+            )}
           </div>
         </div>
 
@@ -221,12 +273,12 @@ export const PostCard: React.FC<PostCardProps> = ({
 
       {/* Main Card Content */}
       <div className="px-5 pb-3 flex flex-col gap-1.5 text-left">
-        <h3 className="font-bold text-slate-900 dark:text-slate-50 text-[15px] flex items-center gap-1.5 leading-snug">
-          {title.startsWith('✨') ? title : `✨ ${title}`}
-        </h3>
-        <p className="text-slate-700 dark:text-slate-300 text-[14px] leading-relaxed">
-          {body}
-        </p>
+        {title && (
+          <p className="font-extrabold text-[15px] text-slate-900 dark:text-slate-100 leading-snug">
+            {title}
+          </p>
+        )}
+        {body && renderParsedBody(body)}
       </div>
 
       {/* Image Container (with matching margin) */}
@@ -252,72 +304,46 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
       )}
 
-      {/* Stats Row (Above Action Row) */}
-      <div className="px-5 py-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800/60 mt-1">
-        <div className="flex items-center gap-1">
-          <span className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-blue-500 text-[10px] text-white select-none">👍</span>
-          <span className="font-semibold text-slate-500 dark:text-slate-400">{localLikes} likes</span>
+      {/* Compact premium action row */}
+      <div className="px-5 py-2.5 flex items-center justify-between border-t border-slate-100 dark:border-slate-850/60 mt-3 select-none text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-6">
+          {/* Like */}
+          <button
+            onClick={handleLike}
+            className={`flex items-center gap-1.5 hover:text-pink-600 transition-colors duration-200 focus:outline-none text-[13px] font-bold ${
+              isLiked ? 'text-pink-650 dark:text-pink-400' : ''
+            }`}
+          >
+            <Heart className={`w-[18px] h-[18px] ${isLiked ? 'fill-pink-600 text-pink-600' : ''}`} />
+            <span>{formatCount(localLikes)}</span>
+          </button>
+
+          {/* Comment */}
+          <button
+            onClick={handleToggleComments}
+            className="flex items-center gap-1.5 hover:text-purple-600 transition-colors duration-200 focus:outline-none text-[13px] font-bold"
+          >
+            <MessageCircle className="w-[18px] h-[18px]" />
+            <span>{formatCount(commentsCount)}</span>
+          </button>
+
+          {/* Share */}
+          <button
+            onClick={handleShare}
+            className="flex items-center hover:text-blue-500 transition-colors duration-200 focus:outline-none"
+          >
+            <Send className="w-[18px] h-[18px] rotate-[-15deg] translate-y-[-1px]" />
+          </button>
         </div>
-        <div className="flex items-center gap-1 font-semibold text-slate-500 dark:text-slate-400">
-          <span>{showComments ? comments.length : commentsCount} comments</span>
-        </div>
-      </div>
 
-      {/* Interaction Bar - LinkedIn-style with labels */}
-      <div className="px-2 py-1 flex items-center justify-between select-none">
-        {/* Like Button */}
-        <button
-          onClick={handleLike}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-extrabold transition-colors duration-200 focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/60 ${
-            isLiked ? 'text-pink-650 dark:text-pink-400' : 'text-slate-650 dark:text-slate-400'
-          }`}
-          aria-label="Like post"
-        >
-          <Heart
-            className={`w-[17px] h-[17px] transition-colors duration-200 ${isLiked ? 'fill-current stroke-current' : 'stroke-current text-slate-500'}`}
-            strokeWidth={2}
-          />
-          <span>Like</span>
-        </button>
-
-        {/* Comment Button */}
-        <button
-          onClick={handleToggleComments}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-extrabold transition-colors duration-200 focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/60 ${
-            showComments ? 'text-purple-650 dark:text-purple-400' : 'text-slate-655 dark:text-slate-400'
-          }`}
-          aria-label="Comment on post"
-        >
-          <MessageCircle
-            className={`w-[17px] h-[17px] transition-colors duration-200 ${showComments ? 'fill-purple-500/10 stroke-purple-600' : 'stroke-current text-slate-505'}`}
-            strokeWidth={2}
-          />
-          <span>Comment</span>
-        </button>
-
-        {/* Share Button */}
-        <button
-          onClick={handleShare}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-extrabold text-slate-650 dark:text-slate-400 transition-colors duration-200 focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/60"
-          aria-label="Share post"
-        >
-          <Send className="w-[17px] h-[17px] rotate-[-15deg] translate-y-[-1px] text-slate-500" strokeWidth={2} />
-          <span>Share</span>
-        </button>
-
-        {/* Save Button */}
+        {/* Save */}
         <button
           onClick={handleBookmark}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-extrabold transition-colors duration-200 focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/60 ${
-            isSaved ? 'text-amber-600 dark:text-amber-500' : 'text-slate-650 dark:text-slate-400'
+          className={`flex items-center hover:text-amber-500 transition-colors duration-200 focus:outline-none ${
+            isSaved ? 'text-amber-500' : ''
           }`}
-          aria-label="Save post"
         >
-          <Bookmark
-            className={`w-[17px] h-[17px] transition-colors duration-200 ${isSaved ? 'fill-current stroke-current' : 'stroke-current text-slate-500'}`}
-            strokeWidth={2}
-          />
-          <span>Save</span>
+          <Bookmark className={`w-[18px] h-[18px] ${isSaved ? 'fill-amber-500 text-amber-500' : ''}`} />
         </button>
       </div>
 

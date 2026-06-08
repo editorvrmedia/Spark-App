@@ -7,7 +7,7 @@ import { CreatePost } from './components/CreatePost';
 import { AppNavigation, NavTab } from './components/AppNavigation';
 import { NotificationsOverlay } from './components/NotificationsOverlay';
 import { MessagesOverlay } from './components/MessagesOverlay';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, TrendingUp } from 'lucide-react';
 
 import { supabase } from './lib/supabaseClient';
 import { ProfileOnboarding } from './components/ProfileOnboarding';
@@ -524,9 +524,16 @@ function App() {
               )}
             </>
           )}
+          {/* Footer centered under content */}
+          <div className="mt-8 mb-4 flex flex-col items-center justify-center gap-1.5 text-[10px] text-slate-450 dark:text-slate-500 font-semibold select-none">
+            <div className="flex gap-4">
+              <a href="#" className="hover:underline">Privacy</a>
+              <a href="#" className="hover:underline">Terms</a>
+              <a href="#" className="hover:underline">Help</a>
+            </div>
+            <p className="text-slate-400 dark:text-slate-600">© 2026 Spark Social. All rights reserved.</p>
+          </div>
         </main>
-
-        {/* Right Widgets Panel (Desktop only - persistent for premium structure) */}
         <aside className="hidden lg:flex flex-col gap-6 w-80 shrink-0 sticky top-0 p-6 h-screen overflow-y-auto border-l border-slate-100 dark:border-slate-800/40">
 
           {/* Quick Search */}
@@ -538,8 +545,8 @@ function App() {
                 setSearchQuery(e.target.value);
                 if (activeTab !== 'explore') setActiveTab('explore');
               }}
-              placeholder="Search sparks or students..."
-              className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 pl-10 pr-4 py-2.5 rounded-2xl text-xs focus:outline-none focus:border-purple-500 text-slate-800 dark:text-slate-100 shadow-sm"
+              placeholder="Search Sparks..."
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 pl-10 pr-4 py-2.5 rounded-2xl text-xs focus:outline-none focus:border-purple-500 text-slate-800 dark:text-slate-100 shadow-sm font-semibold"
             />
             <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
             {searchQuery && (
@@ -557,62 +564,95 @@ function App() {
             <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest pl-0.5">
               Trending Sparks
             </h3>
-            <div className="flex flex-wrap gap-2">
-              {['#development', '#design', '#hackathon', '#exams', '#stbrittos', '#sports'].map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => {
-                    setSearchTab('sparks');
-                    setSearchQuery(tag);
-                    setActiveTab('explore');
-                  }}
-                  className="px-3 py-1.5 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-855 rounded-2xl border border-slate-200/40 dark:border-slate-800/80 text-[10px] font-bold text-slate-700 dark:text-slate-350 transition-all duration-300 ease-spring active:scale-95 flex items-center gap-1 shadow-sm focus:outline-none"
-                >
-                  <span className="text-purple-500 font-extrabold mr-0.5">#</span>
-                  {tag.replace('#', '')}
-                </button>
+            <div className="flex flex-col gap-3.5">
+              {[
+                { category: 'TECHNOLOGY • TRENDING', tag: '#QuantumComputing', count: '12.4k Sparks' },
+                { category: 'DESIGN • TRENDING', tag: '#SpatialUI', count: '8.1k Sparks' },
+                { category: 'DEVELOPMENT • TRENDING', tag: '#RustLang', count: '5.2k Sparks' }
+              ].map(item => (
+                <div key={item.tag} className="flex flex-col text-left">
+                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{item.category}</span>
+                  <button
+                    onClick={() => {
+                      setSearchTab('sparks');
+                      setSearchQuery(item.tag);
+                      setActiveTab('explore');
+                    }}
+                    className="font-extrabold text-[14px] text-slate-905 dark:text-slate-105 hover:underline text-left mt-0.5 focus:outline-none"
+                  >
+                    {item.tag}
+                  </button>
+                  <span className="text-[10px] text-slate-450 dark:text-slate-500 font-medium">{item.count}</span>
+                </div>
               ))}
             </div>
+            <button
+              onClick={() => setActiveTab('explore')}
+              className="text-left text-xs font-bold text-[#e52b86] hover:underline focus:outline-none mt-1"
+            >
+              Show more
+            </button>
           </div>
 
-          {/* Suggested Students Card */}
+          {/* Suggested for you Card */}
           <div className="bg-white/60 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm backdrop-blur-sm flex flex-col gap-4 text-left">
-            <h3 className="text-[10px] font-black text-slate-455 dark:text-slate-555 uppercase tracking-widest pl-0.5">
-              Suggested Students
+            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest pl-0.5">
+              Suggested for you
             </h3>
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-3.5">
               {[
                 {
-                  username: 'alex_dev',
-                  display_name: 'Alex Rivera',
+                  username: 'marcus_l',
+                  display_name: 'Marcus Lin',
+                  role: 'AI Researcher',
                   avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
                 },
                 {
-                  username: 'spark_team',
-                  display_name: 'Spark Team',
-                  avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop',
+                  username: 'aria_t',
+                  display_name: 'Aria Thorne',
+                  role: 'UX Strategy',
+                  avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
                 }
               ].map(u => (
                 <div
                   key={u.username}
-                  onClick={() => setViewedUsername(u.username)}
-                  className="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-850 border border-slate-200/40 dark:border-slate-800/40 p-3 rounded-2xl flex items-center justify-between cursor-pointer hover:shadow-md transition-all duration-300 ease-spring active:scale-[0.99]"
+                  className="flex items-center justify-between gap-2 text-left"
                 >
-                  <div className="flex items-center gap-3">
-                    <img src={u.avatar_url} alt="avatar" className="w-8.5 h-8.5 shrink-0 rounded-full object-cover border border-slate-100 dark:border-slate-800" />
+                  <div
+                    onClick={() => { setViewedUsername(u.username); setActiveTab('home'); }}
+                    className="flex items-center gap-3 cursor-pointer hover:opacity-90"
+                  >
+                    <img src={u.avatar_url} alt="avatar" className="w-9 h-9 shrink-0 rounded-full object-cover border border-slate-100 dark:border-slate-800/40" />
                     <div className="flex flex-col text-left">
-                      <span className="text-xs font-extrabold text-slate-855 dark:text-slate-200 leading-tight">
+                      <span className="text-xs font-extrabold text-slate-900 dark:text-slate-105 leading-tight">
                         {u.display_name}
                       </span>
-                      <span className="text-[9px] text-slate-400">@{u.username}</span>
+                      <span className="text-[10px] text-slate-400 leading-normal">{u.role}</span>
                     </div>
                   </div>
-                  <button className="px-3.5 py-1 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/20 dark:hover:bg-purple-950/40 rounded-full text-[10px] font-black text-purple-600 dark:text-purple-400 transition-all focus:outline-none">
-                    View
+                  <button className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-slate-950 rounded-full text-[11px] font-bold transition-all focus:outline-none select-none">
+                    Follow
                   </button>
                 </div>
               ))}
             </div>
+            <button
+              onClick={() => setActiveTab('explore')}
+              className="text-left text-xs font-bold text-[#e52b86] hover:underline focus:outline-none mt-1"
+            >
+              Show more
+            </button>
+          </div>
+
+          {/* Engagement Stat Card */}
+          <div className="bg-white/60 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/50 rounded-3xl p-5 shadow-sm backdrop-blur-sm flex flex-col gap-2 text-left">
+            <div className="w-8 h-8 rounded-xl bg-pink-500/10 dark:bg-pink-550/20 flex items-center justify-center mb-1">
+              <TrendingUp className="w-5 h-5 text-[#e52b86]" />
+            </div>
+            <span className="text-2xl font-black text-slate-950 dark:text-white leading-none">4.2k</span>
+            <span className="text-[10px] text-slate-450 dark:text-slate-400 font-bold leading-relaxed">
+              Engagement increase on Spark this week.
+            </span>
           </div>
 
           {/* Footer details */}

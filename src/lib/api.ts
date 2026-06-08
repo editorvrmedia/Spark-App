@@ -72,6 +72,51 @@ const MOCK_PROFILES: Record<string, ProfileWithAchievements> = {
         earned_at: new Date().toISOString()
       }
     ]
+  },
+  j_vane: {
+    id: 'auth-j_vane',
+    user_id: 'user-j_vane',
+    username: 'j_vane',
+    display_name: 'Julian Vane',
+    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
+    bio: 'Interaction Designer',
+    role: 'user',
+    is_suspended: false,
+    suspension_reason: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    deleted_at: null,
+    achievements: []
+  },
+  elena_dev: {
+    id: 'auth-elena_dev',
+    user_id: 'user-elena_dev',
+    username: 'elena_dev',
+    display_name: 'Elena Stark',
+    avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
+    bio: 'Fullstack Architect',
+    role: 'user',
+    is_suspended: false,
+    suspension_reason: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    deleted_at: null,
+    achievements: []
+  },
+  sarah_c: {
+    id: 'auth-sarah_c',
+    user_id: 'user-sarah_c',
+    username: 'sarah_c',
+    display_name: 'Sarah Chen',
+    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop',
+    bio: 'AI Researcher',
+    role: 'user',
+    is_suspended: false,
+    suspension_reason: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    deleted_at: null,
+    achievements: []
   }
 };
 
@@ -395,9 +440,9 @@ export interface PostWithAuthor extends DBPost {
 const DEFAULT_MOCK_POSTS: PostWithAuthor[] = [
   {
     id: 'mock-post-1',
-    author_id: 'auth-1',
-    title: 'Welcome to Spark Social Feed',
-    body: 'We are thrilled to launch the new Spark App feed. This interface is built with React, TypeScript, and Tailwind CSS. Double tap cards to like, and experience smooth interactions. Enjoy the glassmorphic aesthetics!',
+    author_id: 'auth-j_vane',
+    title: 'Working on a new mental model for distributed systems.',
+    body: 'The idea is to treat individual micro services as autonomous neurons that fire only when data threshold is met. Efficiency +140%.',
     media_urls: ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop'],
     image_url: null,
     status: 'approved',
@@ -408,13 +453,15 @@ const DEFAULT_MOCK_POSTS: PostWithAuthor[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     updated_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     published_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    author: MOCK_PROFILES['spark_team']
-  },
+    author: MOCK_PROFILES['j_vane'] as any,
+    likes_count: 1200,
+    comments_count: 42
+  } as any,
   {
     id: 'mock-post-2',
-    author_id: 'auth-2',
-    title: 'Frontend Optimization with Tailwind & Vite',
-    body: 'Just finished profiling our bundle sizes. By utilizing postCSS, Autoprefixer, and Vite path aliases, we kept our bundle sizes incredibly small while building custom glassmorphism styles directly in tailwind.css.',
+    author_id: 'auth-elena_dev',
+    title: 'Check out this cleaner way to handle async state in React with custom hooks.',
+    body: "Reduces boilerplate by 60%.\n\n```typescript\nconst useAsync = (task) => {\n  const [state, setState] = useState('idle');\n  const execute = async () => {\n    setState('loading');\n    try {\n      await task();\n      setState('success');\n    } catch (e) {\n      setState('error');\n    }\n  };\n  return { state, execute };\n};\n```",
     media_urls: [],
     image_url: null,
     status: 'approved',
@@ -425,8 +472,29 @@ const DEFAULT_MOCK_POSTS: PostWithAuthor[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
     updated_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
     published_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    author: MOCK_PROFILES['alex_dev']
-  }
+    author: MOCK_PROFILES['elena_dev'] as any,
+    likes_count: 840,
+    comments_count: 18
+  } as any,
+  {
+    id: 'mock-post-3',
+    author_id: 'auth-sarah_c',
+    title: "The future of design isn't interfaces, it's intent orchestration.",
+    body: '',
+    media_urls: ['https://images.unsplash.com/photo-1496181130204-755241524eab?q=80&w=800&auto=format&fit=crop'],
+    image_url: null,
+    status: 'approved',
+    rejection_reason: null,
+    is_nsfw: false,
+    is_pinned: false,
+    deleted_at: null,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    published_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    author: MOCK_PROFILES['sarah_c'] as any,
+    likes_count: 4200,
+    comments_count: 156
+  } as any
 ];
 
 export const initMockPosts = (): PostWithAuthor[] => {
