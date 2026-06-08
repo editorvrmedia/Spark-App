@@ -24,7 +24,10 @@ CREATE POLICY "Allow Public Select on post-images" ON storage.objects
 CREATE POLICY "Allow Authenticated Insert on post-images" ON storage.objects
     FOR INSERT
     TO authenticated
-    WITH CHECK (bucket_id = 'post-images');
+    WITH CHECK (
+        bucket_id = 'post-images'
+        AND (owner IS NULL OR auth.uid() = owner)
+    );
 
 -- Allow authenticated users to UPDATE/DELETE their own uploaded objects
 CREATE POLICY "Allow Authenticated Owner Modification on post-images" ON storage.objects

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { PostCard } from './PostCard';
-import { AlertTriangle, RefreshCw, Sparkles } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Sparkles, ShieldAlert } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { fetchPosts } from '../lib/api';
 
@@ -131,10 +131,21 @@ export const Feed: React.FC<FeedProps> = (props) => {
   return (
     <div className="flex flex-col items-center w-full">
       {/* Sticky Glassmorphic Header */}
-      <header className="sticky top-0 z-40 w-full bg-white/70 dark:bg-[#0E0E11]/70 backdrop-blur-md border-b border-slate-100 dark:border-slate-900/40 px-5 py-4.5 flex items-center justify-between shadow-sm">
-        <h2 className="text-xl font-bold text-slate-950 dark:text-white tracking-tight">
-          Home Feed
-        </h2>
+      <header className="sticky top-0 z-40 w-full bg-white/70 dark:bg-[#0E0E11]/70 backdrop-blur-md border-b border-slate-100 dark:border-slate-900/40 px-5 py-4 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-bold text-slate-950 dark:text-white tracking-tight">
+            Home Feed
+          </h2>
+          {props.onNavigateToAdmin && (
+            <button
+              onClick={props.onNavigateToAdmin}
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-900 text-[#e52b86] rounded-xl active:scale-95 transition-all"
+              title="Moderator Guard Queue"
+            >
+              <ShieldAlert className="w-4 h-4" />
+            </button>
+          )}
+        </div>
         <div className="flex items-center bg-slate-100 dark:bg-slate-950/60 p-0.5 rounded-full border border-slate-200/10 gap-0.5 select-none">
           <button
             onClick={() => setFeedSort('recent')}

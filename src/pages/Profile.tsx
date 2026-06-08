@@ -69,6 +69,50 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editAvatar, setEditAvatar] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setUploadingAvatar(true);
+      setUploadError(null);
+
+      if (!isSupabaseConfigured) {
+        // Simulation mode
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setEditAvatar('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150&auto=format&fit=crop');
+        setUploadingAvatar(false);
+        return;
+      }
+
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_avatar.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        // Upload to post-images storage bucket (public access is configured)
+        const { error: uploadError } = await supabase.storage
+          .from('post-images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('post-images')
+          .getPublicUrl(filePath);
+
+        setEditAvatar(publicUrl);
+      } catch (err: any) {
+        setUploadError(err.message || 'Failed to upload avatar.');
+      } finally {
+        setUploadingAvatar(false);
+      }
+    }
+  };
 
   const isSupabaseConfigured =
     import.meta.env.VITE_SUPABASE_URL &&
@@ -499,7 +543,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
       {/* Edit Profile Modal */}
       {isEditOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col gap-4 animate-[scaleUp_0.35s_cubic-bezier(0.34,1.56,0.64,1)]">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl overflow-y-auto max-h-[90vh] shadow-2xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col gap-4 animate-[scaleUp_0.35s_cubic-bezier(0.34,1.56,0.64,1)]">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
               <span className="font-extrabold text-slate-900 dark:text-slate-50 text-base">
                 Edit Profile
@@ -513,6 +557,46 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
             </div>
 
             <form onSubmit={handleSaveProfile} className="flex flex-col gap-4 text-left">
+              {/* Profile Image Uploader */}
+              <div className="flex flex-col items-center gap-2 mb-2">
+                <div className="relative group w-20 h-20 rounded-full overflow-hidden border-2 border-purple-500 shadow-md">
+                  {uploadingAvatar ? (
+                    <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
+                      <RefreshCw className="w-5 h-5 text-white animate-spin" />
+                    </div>
+                  ) : editAvatar ? (
+                    <img
+                      src={editAvatar}
+                      alt="Avatar preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-200 dark:bg-slate-850 flex items-center justify-center text-xs font-bold text-slate-550">
+                      SP
+                    </div>
+                  )}
+                  <label
+                    htmlFor="edit-avatar-file"
+                    className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white text-[10px] font-bold"
+                  >
+                    <Camera className="w-4 h-4 mb-0.5" />
+                    <span>Upload</span>
+                  </label>
+                </div>
+                <input
+                  type="file"
+                  id="edit-avatar-file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                  disabled={uploadingAvatar}
+                />
+                <span className="text-[10px] font-semibold text-slate-400">Click picture to change</span>
+                {uploadError && (
+                  <span className="text-[10px] text-red-500 font-bold mt-1 text-center">⚠️ {uploadError}</span>
+                )}
+              </div>
+
               {/* Display Name */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">
@@ -547,7 +631,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
               {/* Avatar Url */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">
-                  Avatar Image Link
+                  Or Paste Avatar Image URL
                 </label>
                 <div className="relative">
                   <input
@@ -564,7 +648,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
               {/* Form buttons */}
               <button
                 type="submit"
-                disabled={isSaving}
+                disabled={isSaving || uploadingAvatar}
                 className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-500 text-white font-bold py-3 px-4 rounded-2xl text-sm transition-all duration-200 flex items-center justify-center gap-1.5 mt-2 shadow-lg shadow-purple-500/10 active:scale-[0.98]"
               >
                 {isSaving ? (

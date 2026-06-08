@@ -137,5 +137,5 @@ CREATE POLICY "Allow Authenticated Insert on post-images" ON storage.objects
     TO authenticated
     WITH CHECK (
         bucket_id = 'post-images' 
-        AND auth.uid() = owner
+        AND (owner IS NULL OR auth.uid() = owner)
     );

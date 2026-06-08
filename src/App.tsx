@@ -310,7 +310,7 @@ function App() {
         />
 
         {/* Center Content Column */}
-        <main className="flex-1 min-w-0 border-x border-slate-100 dark:border-slate-900/40 flex flex-col pb-6">
+        <main className="flex-1 min-w-0 border-x border-slate-100 dark:border-slate-900/40 flex flex-col pb-20 md:pb-6">
           {viewedUsername ? (
             <Profile username={viewedUsername} onBack={() => setViewedUsername(null)} />
           ) : (
