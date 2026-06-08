@@ -162,13 +162,13 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 w-full md:max-w-4xl mx-auto relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 w-full relative overflow-hidden">
       {/* Background ambient glowing blobs */}
       <div className="absolute w-[350px] h-[350px] bg-purple-500/10 dark:bg-purple-600/15 top-[15%] left-[-10%] blur-3xl rounded-full pointer-events-none" />
       <div className="absolute w-[350px] h-[350px] bg-pink-500/10 dark:bg-pink-600/15 bottom-[15%] right-[-10%] blur-3xl rounded-full pointer-events-none" />
 
       {/* Main glass card */}
-      <div className="w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800/40 p-8 flex flex-col gap-6 z-10 animate-[scaleUp_0.35s_cubic-bezier(0.34,1.56,0.64,1)] relative">
+      <div className="w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800/40 p-8 flex flex-col gap-6 z-10 animate-[scaleUp_0.35s_cubic-bezier(0.34,1.56,0.64,1)] relative">
         
         {/* Step Indicator Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-150 dark:border-slate-800/50">
