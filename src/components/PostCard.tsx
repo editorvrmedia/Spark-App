@@ -165,7 +165,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   const mainImageUrl = mediaUrls.length > 0 ? mediaUrls[0] : null;
 
   return (
-    <article className="w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-800/40 py-4 animate-fade-in">
+    <article className="w-full bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800/60 py-4 animate-fade-in">
       {/* Card Header */}
       <div className="flex items-center justify-between px-5 pb-3">
         <div className="flex items-center gap-3">
@@ -252,72 +252,73 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
       )}
 
-      {/* Interaction Bar - All touch targets mapped to at least 44x44px */}
-      <div className="px-3 pt-2 flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            {/* Like Button (44x44px) */}
-            <button
-              onClick={handleLike}
-              className="w-11 h-11 flex items-center justify-center transition-transform duration-200 active:scale-125 focus:outline-none"
-              aria-label="Like post"
-            >
-              <Heart
-                className={`w-[26px] h-[26px] transition-colors duration-200 ${
-                  isLiked 
-                    ? 'fill-[#F43F5E] stroke-[#F43F5E]' 
-                    : 'text-slate-800 dark:text-slate-200 hover:text-red-500'
-                }`}
-                strokeWidth={1.5}
-              />
-            </button>
-
-            {/* Comment Button (44x44px) */}
-            <button 
-              onClick={handleToggleComments}
-              className={`w-11 h-11 flex items-center justify-center transition-colors focus:outline-none ${
-                showComments 
-                  ? 'text-purple-600 dark:text-purple-400' 
-                  : 'text-slate-800 dark:text-slate-200 hover:text-purple-600'
-              }`}
-              aria-label="Comment on post"
-            >
-              <MessageCircle className={`w-[26px] h-[26px] ${showComments ? 'fill-purple-500/10' : ''}`} strokeWidth={1.5} />
-            </button>
-
-            {/* Share Button (44x44px) */}
-            <button 
-              onClick={handleShare}
-              className="w-11 h-11 flex items-center justify-center text-slate-800 dark:text-slate-200 hover:text-indigo-600 transition-colors focus:outline-none"
-              aria-label="Share post"
-            >
-              <Send className="w-[26px] h-[26px] rotate-[-15deg] translate-y-[-1px]" strokeWidth={1.5} />
-            </button>
-          </div>
-
-          {/* Bookmark Button (44x44px) */}
-          <button
-            onClick={handleBookmark}
-            className="w-11 h-11 flex items-center justify-center transition-transform duration-200 active:scale-125 focus:outline-none"
-            aria-label="Save post"
-          >
-            <Bookmark 
-              className={`w-[26px] h-[26px] transition-colors duration-200 ${
-                isSaved 
-                  ? 'fill-slate-900 stroke-slate-900 dark:fill-slate-100 dark:stroke-slate-100' 
-                  : 'text-slate-800 dark:text-slate-200 hover:text-amber-500'
-              }`}
-              strokeWidth={1.5}
-            />
-          </button>
+      {/* Stats Row (Above Action Row) */}
+      <div className="px-5 py-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800/60 mt-1">
+        <div className="flex items-center gap-1">
+          <span className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-blue-500 text-[10px] text-white select-none">👍</span>
+          <span className="font-semibold text-slate-500 dark:text-slate-400">{localLikes} likes</span>
         </div>
-
-        {/* Action Totals */}
-        <div className="px-2 flex items-center gap-1.5 text-[14px] font-bold text-slate-800 dark:text-slate-200 mt-0.5 text-left">
-          <span>{localLikes} likes</span>
-          <span>•</span>
+        <div className="flex items-center gap-1 font-semibold text-slate-500 dark:text-slate-400">
           <span>{showComments ? comments.length : commentsCount} comments</span>
         </div>
+      </div>
+
+      {/* Interaction Bar - LinkedIn-style with labels */}
+      <div className="px-2 py-1 flex items-center justify-between select-none">
+        {/* Like Button */}
+        <button
+          onClick={handleLike}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-extrabold transition-colors duration-200 focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/60 ${
+            isLiked ? 'text-pink-650 dark:text-pink-400' : 'text-slate-650 dark:text-slate-400'
+          }`}
+          aria-label="Like post"
+        >
+          <Heart
+            className={`w-[17px] h-[17px] transition-colors duration-200 ${isLiked ? 'fill-current stroke-current' : 'stroke-current text-slate-500'}`}
+            strokeWidth={2}
+          />
+          <span>Like</span>
+        </button>
+
+        {/* Comment Button */}
+        <button
+          onClick={handleToggleComments}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-extrabold transition-colors duration-200 focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/60 ${
+            showComments ? 'text-purple-650 dark:text-purple-400' : 'text-slate-655 dark:text-slate-400'
+          }`}
+          aria-label="Comment on post"
+        >
+          <MessageCircle
+            className={`w-[17px] h-[17px] transition-colors duration-200 ${showComments ? 'fill-purple-500/10 stroke-purple-600' : 'stroke-current text-slate-505'}`}
+            strokeWidth={2}
+          />
+          <span>Comment</span>
+        </button>
+
+        {/* Share Button */}
+        <button
+          onClick={handleShare}
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-extrabold text-slate-650 dark:text-slate-400 transition-colors duration-200 focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/60"
+          aria-label="Share post"
+        >
+          <Send className="w-[17px] h-[17px] rotate-[-15deg] translate-y-[-1px] text-slate-500" strokeWidth={2} />
+          <span>Share</span>
+        </button>
+
+        {/* Save Button */}
+        <button
+          onClick={handleBookmark}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-extrabold transition-colors duration-200 focus:outline-none hover:bg-slate-50 dark:hover:bg-slate-800/60 ${
+            isSaved ? 'text-amber-600 dark:text-amber-500' : 'text-slate-650 dark:text-slate-400'
+          }`}
+          aria-label="Save post"
+        >
+          <Bookmark
+            className={`w-[17px] h-[17px] transition-colors duration-200 ${isSaved ? 'fill-current stroke-current' : 'stroke-current text-slate-500'}`}
+            strokeWidth={2}
+          />
+          <span>Save</span>
+        </button>
       </div>
 
       {/* Toast Alert message */}

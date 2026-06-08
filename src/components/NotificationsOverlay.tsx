@@ -138,10 +138,10 @@ export function NotificationsOverlay({
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[120] flex items-stretch justify-end p-0 bg-slate-950/60 backdrop-blur-[2px]"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col max-h-[85vh] animate-[slideUp_0.35s_cubic-bezier(0.34,1.56,0.64,1)]">
+      <div className="bg-white dark:bg-slate-900 w-[420px] max-w-full rounded-none overflow-hidden shadow-2xl border-l border-slate-100 dark:border-slate-800/40 flex flex-col h-screen animate-slide-left">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
           <div className="flex items-center gap-2.5">

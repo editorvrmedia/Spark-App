@@ -7,6 +7,10 @@ export default {
   darkMode: 'class', // allows manual or system preference toggle
   theme: {
     extend: {
+      spacing: {
+        '4.5': '1.125rem',
+        '8.5': '2.125rem',
+      },
       colors: {
         brand: {
           50: '#f5f3ff',

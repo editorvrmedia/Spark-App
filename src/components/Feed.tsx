@@ -1,10 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { PostCard } from './PostCard';
-import { SparkLogo } from './SparkLogo';
-import { AlertTriangle, RefreshCw, Sparkles, Bell, ShieldAlert } from 'lucide-react';
-
-
+import { AlertTriangle, RefreshCw, Sparkles } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 import { fetchPosts } from '../lib/api';
 
 export interface FeedProps {
@@ -18,20 +16,56 @@ export interface FeedProps {
   feedRefetchTrigger?: number;
   unreadNotifCount?: number;
   unreadMsgCount?: number;
+  onCreatePost?: () => void;
 }
 
-export const Feed: React.FC<FeedProps> = ({ 
-  theme,
-  onToggleTheme,
-  onNavigateToAdmin,
-  onSelectUser,
-  onOpenNotifications,
-  onOpenMessages,
-  currentProfileId,
-  feedRefetchTrigger,
-  unreadNotifCount = 0,
-  unreadMsgCount = 0,
-}) => {
+export const Feed: React.FC<FeedProps> = (props) => {
+  const {
+    onSelectUser,
+    currentProfileId,
+    feedRefetchTrigger,
+    onCreatePost,
+  } = props;
+
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function loadProfile() {
+      if (!currentProfileId) return;
+      const isSupabaseConfigured =
+        import.meta.env.VITE_SUPABASE_URL &&
+        import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+      if (!isSupabaseConfigured) {
+        const mockProfile = currentProfileId === 'auth-1' ? {
+          username: 'spark_team',
+          display_name: 'Spark Team',
+          avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop'
+        } : {
+          username: 'alex_dev',
+          display_name: 'Alex Rivera',
+          avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop'
+        };
+        if (active) setCurrentUserProfile(mockProfile);
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username, display_name, avatar_url')
+          .eq('id', currentProfileId)
+          .single();
+        if (!error && data && active) {
+          setCurrentUserProfile(data);
+        }
+      } catch (e) {
+        console.error('Error loading current profile in Feed:', e);
+      }
+    }
+    loadProfile();
+    return () => { active = false; };
+  }, [currentProfileId]);
+
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const {
@@ -95,87 +129,74 @@ export const Feed: React.FC<FeedProps> = ({
 
   return (
     <div className="flex flex-col items-center w-full">
-      {/* Fixed Sticky Glassmorphic Header */}
-      <header className="sticky top-0 z-50 w-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/40 px-5 py-3.5 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2.5 animate-fade-in">
-          <SparkLogo size={32} className="relative top-[-1px]" />
-          <span className="text-3.5xl font-black text-[#D946EF] dark:text-[#E879F9] tracking-tighter font-sans select-none bg-gradient-to-r from-pink-500 to-fuchsia-600 bg-clip-text text-transparent">
-            Spark
-          </span>
-        </div>
-        
-        {/* Header Icons on Top-Right */}
-        <div className="flex items-center gap-4 text-slate-850 dark:text-slate-200">
-          {/* Theme switcher */}
-          <button
-            onClick={onToggleTheme}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-850 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 transition-all duration-300 ease-spring active:scale-90 text-slate-700 dark:text-slate-300 focus:outline-none"
-            aria-label="Toggle Theme"
-            title="Toggle Dark/Light Mode"
-          >
-            {theme === 'dark' ? (
-              <svg className="w-5.5 h-5.5 text-amber-500 fill-amber-500/20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
-            ) : (
-              <svg className="w-5.5 h-5.5 text-indigo-600 fill-indigo-600/10" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-            )}
-          </button>
-
-          {/* Moderator Guard shortcut icon */}
-          {onNavigateToAdmin && (
-            <button 
-              onClick={onNavigateToAdmin} 
-              className="text-[#7C3AED] dark:text-[#A78BFA] hover:scale-110 active:scale-95 transition-all duration-300 ease-spring" 
-              aria-label="Moderator Queue"
-              title="Moderator Dashboard"
-            >
-              <ShieldAlert className="w-[26px] h-[26px]" strokeWidth={1.5} />
-            </button>
-          )}
-
-          <button 
-            onClick={onOpenNotifications}
-            className="relative hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring focus:outline-none" 
-            aria-label="Notifications"
-          >
-            <Bell className="w-[26px] h-[26px]" strokeWidth={1.5} />
-            {unreadNotifCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center shadow-sm">
-                {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
-              </span>
-            )}
-          </button>
-          
-          <button 
-            onClick={onOpenMessages}
-            className="relative hover:text-purple-600 hover:scale-110 active:scale-95 transition-all duration-300 ease-spring focus:outline-none" 
-            aria-label="Direct Messages"
-          >
-            {/* Messenger Chat Icon */}
-            <svg 
-              viewBox="0 0 24 24" 
-              width="26" 
-              height="26" 
-              stroke="currentColor" 
-              strokeWidth="1.5" 
-              fill="none" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-              className="transform rotate-[-5deg]"
-            >
-              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-              <path d="M13 8.5l-4 5.5 2.5-2 1.5 2 4-5.5-2.5 2-1.5-2z" fill="currentColor" stroke="none" />
-            </svg>
-            {unreadMsgCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[8px] font-black rounded-full flex items-center justify-center shadow-sm">
-                {unreadMsgCount > 9 ? '9+' : unreadMsgCount}
-              </span>
-            )}
-          </button>
-        </div>
+      {/* Sticky Glassmorphic Header */}
+      <header className="sticky top-0 z-40 w-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/40 px-5 py-4.5 flex items-center justify-between shadow-sm">
+        <h2 className="text-xl font-black text-slate-950 dark:text-slate-50 tracking-tight">
+          Home Feed
+        </h2>
+        <span className="text-[10px] font-black text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 px-2.5 py-1.5 rounded-xl uppercase tracking-wider">
+          ✨ Academic Hub
+        </span>
       </header>
 
       {/* Feed list */}
-      <div className="w-full px-4 flex flex-col gap-4 max-w-md mt-4">
+      <div className="w-full px-4 flex flex-col gap-4 max-w-2xl mt-4">
+        {/* Start a Spark Composer Box */}
+        {onCreatePost && (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              {currentUserProfile?.avatar_url ? (
+                <img
+                  src={currentUserProfile.avatar_url}
+                  alt="My Avatar"
+                  className="w-10 h-10 rounded-full object-cover border border-slate-100 dark:border-slate-800"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-xs text-slate-500">
+                  {currentUserProfile?.display_name?.slice(0, 2).toUpperCase() || 'SP'}
+                </div>
+              )}
+              <button
+                onClick={onCreatePost}
+                className="flex-grow text-left px-4 py-2.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900/80 border border-slate-200 dark:border-slate-800/60 rounded-full text-xs font-semibold text-slate-400 dark:text-slate-500 transition-colors focus:outline-none"
+              >
+                Start a spark...
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-850 pt-2 px-1">
+              <button
+                onClick={onCreatePost}
+                className="flex items-center gap-2 px-3 py-2 text-xs font-extrabold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors focus:outline-none"
+              >
+                <span className="text-emerald-500 text-sm">📸</span>
+                <span>Photo</span>
+              </button>
+              <button
+                onClick={onCreatePost}
+                className="flex items-center gap-2 px-3 py-2 text-xs font-extrabold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors focus:outline-none"
+              >
+                <span className="text-amber-500 text-sm">🎥</span>
+                <span>Video</span>
+              </button>
+              <button
+                onClick={onCreatePost}
+                className="flex items-center gap-2 px-3 py-2 text-xs font-extrabold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors focus:outline-none"
+              >
+                <span className="text-indigo-500 text-sm">📅</span>
+                <span>Event</span>
+              </button>
+              <button
+                onClick={onCreatePost}
+                className="flex items-center gap-2 px-3 py-2 text-xs font-extrabold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors focus:outline-none"
+              >
+                <span className="text-orange-500 text-sm">📝</span>
+                <span>Write article</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {status === 'pending' && renderSkeletons()}
 
         {status === 'error' && (
@@ -195,8 +216,8 @@ export const Feed: React.FC<FeedProps> = ({
         {status === 'success' && (
           <>
             {data.pages.flatMap(page => page).map((post, idx) => {
-              const dateStr = post.created_at.includes('-') 
-                ? new Date(post.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+              const dateStr = post.created_at.includes('-')
+                ? new Date(post.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                 : post.created_at;
               return (
                 <PostCard

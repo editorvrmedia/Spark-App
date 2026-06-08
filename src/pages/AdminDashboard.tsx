@@ -285,7 +285,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome
   }
 
   return (
-    <div className="flex-1 flex flex-col w-full max-w-md bg-slate-50 dark:bg-slate-950 min-h-screen">
+    <div className="flex-1 flex flex-col w-full max-w-6xl bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 md:pb-6">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/40 px-5 py-3.5 flex items-center justify-between shadow-sm">
         <div className="flex flex-col">
@@ -357,7 +357,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome
               Awaiting Review ({pendingPosts.length})
             </span>
 
-            {pendingPosts.map(post => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+              {pendingPosts.map(post => (
               <div 
                 key={post.id} 
                 className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-800/40 p-4 flex flex-col gap-3 relative transition-all duration-300 hover:shadow-md"
@@ -476,6 +477,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome
                 )}
               </div>
             ))}
+            </div>
           </div>
         )}
       </div>
