@@ -2,6 +2,11 @@ import { supabase } from './supabaseClient';
 import { Database } from '../types/database';
 
 export type DBProfile = Database['public']['Tables']['profiles']['Row'];
+
+export const isUuid = (str: string | null | undefined): boolean => {
+  if (!str) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+};
 export type DBAchievement = Database['public']['Tables']['achievements']['Row'];
 
 export interface ProfileWithAchievements extends DBProfile {
@@ -185,7 +190,7 @@ export async function toggleFollow(
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || !isUuid(followerId) || !isUuid(followingId)) {
     // Simulator Mode toggle response
     await new Promise(resolve => setTimeout(resolve, 300));
     return !currentlyFollowing;
@@ -261,7 +266,7 @@ export async function toggleLike(postId: string, profileId: string, currentlyLik
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || !isUuid(postId) || !isUuid(profileId)) {
     await new Promise(resolve => setTimeout(resolve, 200));
     return !currentlyLiked;
   }
@@ -288,8 +293,8 @@ export async function fetchLikeStatus(postId: string, profileId: string): Promis
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
-    return true; // Default liked in layout screens
+  if (!isSupabaseConfigured || !isUuid(postId) || !isUuid(profileId)) {
+    return false; // Return false default instead of throwing 400 Bad Request
   }
 
   const { data, error } = await supabase
@@ -309,7 +314,7 @@ export async function fetchComments(postId: string): Promise<CommentWithAuthor[]
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || !isUuid(postId)) {
     await new Promise(resolve => setTimeout(resolve, 200));
     const allComments = initMockComments();
     const cleanPostId = postId.includes('mock') ? '1' : postId;
@@ -342,7 +347,7 @@ export async function createComment(postId: string, profileId: string, body: str
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || !isUuid(postId) || !isUuid(profileId)) {
     await new Promise(resolve => setTimeout(resolve, 250));
     const allComments = initMockComments();
     const cleanPostId = postId.includes('mock') ? '1' : postId;
@@ -400,7 +405,7 @@ export async function toggleBookmark(postId: string, profileId: string, currentl
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || !isUuid(postId) || !isUuid(profileId)) {
     await new Promise(resolve => setTimeout(resolve, 200));
     return !currentlyBookmarked;
   }
@@ -427,8 +432,8 @@ export async function fetchBookmarkStatus(postId: string, profileId: string): Pr
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
-    return true; // Default bookmarked in layout screens
+  if (!isSupabaseConfigured || !isUuid(postId) || !isUuid(profileId)) {
+    return false; // Return false default instead of throwing 400 Bad Request
   }
 
   const { data, error } = await supabase
