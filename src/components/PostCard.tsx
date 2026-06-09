@@ -81,6 +81,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [isLiked, setIsLiked] = useState(false); 
   const [isSaved, setIsSaved] = useState(false); 
   const [localLikes, setLocalLikes] = useState(likesCount);
+  const [localCommentsCount, setLocalCommentsCount] = useState(commentsCount);
   const [animateLike, setAnimateLike] = useState(false);
   
   // Interactive features states
@@ -90,6 +91,15 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [commentText, setCommentText] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // Sync state with parent props updates
+  useEffect(() => {
+    setLocalLikes(likesCount);
+  }, [likesCount]);
+
+  useEffect(() => {
+    setLocalCommentsCount(commentsCount);
+  }, [commentsCount]);
 
   // Initialize and check status
   useEffect(() => {
@@ -198,6 +208,7 @@ export const PostCard: React.FC<PostCardProps> = ({
     try {
       const newComment = await createComment(postId, currentProfileId, text);
       setComments(prev => [...prev, newComment]);
+      setLocalCommentsCount(prev => prev + 1);
     } catch (e: any) {
       alert('Failed to post comment: ' + e.message);
       setCommentText(text);
@@ -324,7 +335,7 @@ export const PostCard: React.FC<PostCardProps> = ({
             className="flex items-center gap-1.5 hover:text-purple-600 transition-colors duration-200 focus:outline-none text-[13px] font-bold"
           >
             <MessageCircle className="w-[18px] h-[18px]" />
-            <span>{formatCount(commentsCount)}</span>
+            <span>{formatCount(localCommentsCount)}</span>
           </button>
 
           {/* Share */}

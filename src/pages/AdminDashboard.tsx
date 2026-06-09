@@ -106,7 +106,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome
       if (!isSupabaseConfigured) {
         // Simulation mode
         const mockEmail = userEmail || '';
-        const whitelistedMails = ['admin1@stbrittosacademy.edu.in', 'admin2@stbrittosacademy.edu.in'];
+        const whitelistedMails = [
+          'admin1@stbrittosacademy.edu.in',
+          'admin2@stbrittosacademy.edu.in',
+          'gopinath.r@stbrittosacademy.edu.in'
+        ];
         const isSimulatedAdmin = whitelistedMails.includes(mockEmail.toLowerCase());
         
         if (!isSimulatedAdmin) {

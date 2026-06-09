@@ -92,7 +92,8 @@ CREATE TABLE IF NOT EXISTS public.admin_whitelist (
 -- Seed admins
 INSERT INTO public.admin_whitelist (email) VALUES 
 ('admin1@stbrittosacademy.edu.in'),
-('admin2@stbrittosacademy.edu.in')
+('admin2@stbrittosacademy.edu.in'),
+('gopinath.r@stbrittosacademy.edu.in')
 ON CONFLICT (email) DO NOTHING;
 
 -- ---------------------------------------------------------------------------

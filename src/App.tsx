@@ -83,7 +83,11 @@ function App() {
         setCurrentProfileId(null);
       } else {
         const mockEmail = session.user?.email || '';
-        const whitelistedMails = ['admin1@stbrittosacademy.edu.in', 'admin2@stbrittosacademy.edu.in'];
+        const whitelistedMails = [
+          'admin1@stbrittosacademy.edu.in',
+          'admin2@stbrittosacademy.edu.in',
+          'gopinath.r@stbrittosacademy.edu.in'
+        ];
         setIsAdmin(whitelistedMails.includes(mockEmail.toLowerCase()));
         setCurrentProfileId('auth-2'); // default to alex_dev in mock sandbox
       }

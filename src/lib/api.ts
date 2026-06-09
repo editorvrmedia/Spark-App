@@ -564,7 +564,9 @@ export async function fetchPosts(pageParam: number, currentProfileId: string | n
         created_at,
         updated_at,
         deleted_at
-      )
+      ),
+      likes(count),
+      comments(count)
     `)
     .is('deleted_at', null);
 
@@ -584,7 +586,9 @@ export async function fetchPosts(pageParam: number, currentProfileId: string | n
 
   return (data || []).map((post: any) => ({
     ...post,
-    author: Array.isArray(post.author) ? post.author[0] : post.author
+    author: Array.isArray(post.author) ? post.author[0] : post.author,
+    likes_count: post.likes?.[0]?.count ?? 0,
+    comments_count: post.comments?.[0]?.count ?? 0
   })) as PostWithAuthor[];
 }
 
