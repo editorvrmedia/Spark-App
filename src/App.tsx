@@ -86,7 +86,8 @@ function App() {
         const whitelistedMails = [
           'admin1@stbrittosacademy.edu.in',
           'admin2@stbrittosacademy.edu.in',
-          'gopinath.r@stbrittosacademy.edu.in'
+          'gopinath.r@stbrittosacademy.edu.in',
+          'sandbox@stbrittosacademy.edu.in'
         ];
         setIsAdmin(whitelistedMails.includes(mockEmail.toLowerCase()));
         setCurrentProfileId('auth-2'); // default to alex_dev in mock sandbox
@@ -103,9 +104,17 @@ function App() {
           .eq('user_id', session.user.id)
           .single();
 
+        let isUserAdmin = false;
+        try {
+          const { data: isAdminResult } = await supabase.rpc('is_admin');
+          isUserAdmin = !!isAdminResult;
+        } catch (rpcErr) {
+          console.warn('RPC is_admin check failed, falling back to role check:', rpcErr);
+        }
+
         if (profileRow) {
           setCurrentProfileId(profileRow.id);
-          setIsAdmin(profileRow.role === 'admin');
+          setIsAdmin(profileRow.role === 'admin' || isUserAdmin);
 
           const hasCompletedOnboarding = localStorage.getItem(`spark-onboarded-${profileRow.id}`);
           if (!profileRow.bio && !hasCompletedOnboarding) {
@@ -113,7 +122,7 @@ function App() {
           }
         } else {
           setCurrentProfileId(null);
-          setIsAdmin(false);
+          setIsAdmin(isUserAdmin);
         }
       } catch (err) {
         console.error('Failed to load session profile role or admin status:', err);

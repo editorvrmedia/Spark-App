@@ -109,7 +109,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome
         const whitelistedMails = [
           'admin1@stbrittosacademy.edu.in',
           'admin2@stbrittosacademy.edu.in',
-          'gopinath.r@stbrittosacademy.edu.in'
+          'gopinath.r@stbrittosacademy.edu.in',
+          'sandbox@stbrittosacademy.edu.in'
         ];
         const isSimulatedAdmin = whitelistedMails.includes(mockEmail.toLowerCase());
         
