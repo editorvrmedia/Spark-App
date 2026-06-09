@@ -16,6 +16,7 @@ const MOCK_PROFILES: Record<string, ProfileWithAchievements> = {
     display_name: 'Alex Rivera',
     avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
     bio: 'Frontend Engineer @ Spark. Crafting clean, mobile-first social components with Tailwind CSS.',
+    interests: ['Coding 💻', 'Badminton 🏸'],
     role: 'moderator',
     is_suspended: false,
     suspension_reason: null,
@@ -48,6 +49,7 @@ const MOCK_PROFILES: Record<string, ProfileWithAchievements> = {
     display_name: 'Spark Team',
     avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop',
     bio: 'Spark core developers. We build components that connect people instantly.',
+    interests: ['Coding 💻', 'Gaming 🎮'],
     role: 'admin',
     is_suspended: false,
     suspension_reason: null,
@@ -80,6 +82,7 @@ const MOCK_PROFILES: Record<string, ProfileWithAchievements> = {
     display_name: 'Julian Vane',
     avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
     bio: 'Interaction Designer',
+    interests: ['Art/Painting 🎨', 'Photography 📸'],
     role: 'user',
     is_suspended: false,
     suspension_reason: null,
@@ -95,6 +98,7 @@ const MOCK_PROFILES: Record<string, ProfileWithAchievements> = {
     display_name: 'Elena Stark',
     avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
     bio: 'Fullstack Architect',
+    interests: ['Coding 💻', 'Chess ♟️'],
     role: 'user',
     is_suspended: false,
     suspension_reason: null,
@@ -110,6 +114,7 @@ const MOCK_PROFILES: Record<string, ProfileWithAchievements> = {
     display_name: 'Sarah Chen',
     avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop',
     bio: 'AI Researcher',
+    interests: ['Debating 🗣️', 'Volunteering 🤝'],
     role: 'user',
     is_suspended: false,
     suspension_reason: null,
@@ -144,16 +149,24 @@ export async function fetchProfile(username: string): Promise<ProfileWithAchieve
       achievements:achievements (*)
     `)
     .eq('username', username)
-    .single();
+    .maybeSingle();  // use maybeSingle so it returns null instead of error when not found
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  // If no profile in DB (sandbox/demo user not in real DB), fall back to mock
+  if (!data) {
+    const normalized = username.toLowerCase();
+    const mockProfile = MOCK_PROFILES[normalized] || MOCK_PROFILES['alex_dev'];
+    return mockProfile;
   }
 
   // Map relations safely (resolving single/array responses in Supabase bindings)
   const profileData = data as any;
   return {
     ...profileData,
+    interests: profileData.interests || [],
     achievements: Array.isArray(profileData.achievements)
       ? profileData.achievements
       : profileData.achievements
@@ -161,6 +174,7 @@ export async function fetchProfile(username: string): Promise<ProfileWithAchieve
         : []
   } as ProfileWithAchievements;
 }
+
 
 export async function toggleFollow(
   followerId: string,

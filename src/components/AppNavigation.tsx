@@ -192,20 +192,6 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
           <span className="text-[9px] font-extrabold mt-0.5">Home</span>
         </button>
 
-        {/* Explore */}
-        <button
-          onClick={() => onTabChange('explore')}
-          className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all relative ${
-            activeTab === 'explore'
-              ? 'text-[#e52b86]'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-          }`}
-          aria-label="Explore"
-        >
-          <Search className="w-5 h-5" />
-          <span className="text-[9px] font-extrabold mt-0.5">Explore</span>
-        </button>
-
         {/* Create Spark (Action FAB) */}
         <button
           onClick={() => onTabChange('create')}
@@ -230,23 +216,6 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
             )}
           </div>
           <span className="text-[9px] font-extrabold mt-0.5">Messages</span>
-        </button>
-
-        {/* Alerts (Notifications) */}
-        <button
-          onClick={onOpenNotifications}
-          className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all relative text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-          aria-label="Notifications"
-        >
-          <div className="relative">
-            <Bell className="w-5 h-5" />
-            {unreadNotifCount > 0 && (
-              <span className="absolute -top-1.5 -right-2 px-1.5 py-0.5 bg-red-500 text-white text-[8px] font-black rounded-full leading-none flex items-center justify-center">
-                {unreadNotifCount}
-              </span>
-            )}
-          </div>
-          <span className="text-[9px] font-extrabold mt-0.5">Alerts</span>
         </button>
 
         {/* Profile */}

@@ -8,6 +8,30 @@ import { Award, Edit3, Grid, ShieldAlert, Sparkles, X, Check, Camera, RefreshCw,
 
 type DBPost = Database['public']['Tables']['posts']['Row'];
 
+const INTEREST_CATEGORIES = {
+  sports: [
+    { label: 'Cricket 🏏', value: 'Cricket 🏏' },
+    { label: 'Football ⚽', value: 'Football ⚽' },
+    { label: 'Basketball 🏀', value: 'Basketball 🏀' },
+    { label: 'Badminton 🏸', value: 'Badminton 🏸' },
+    { label: 'Athletics 🏃', value: 'Athletics 🏃' },
+  ],
+  cultural: [
+    { label: 'Music 🎵', value: 'Music 🎵' },
+    { label: 'Dance 💃', value: 'Dance 💃' },
+    { label: 'Drama 🎭', value: 'Drama 🎭' },
+    { label: 'Art/Painting 🎨', value: 'Art/Painting 🎨' },
+    { label: 'Photography 📸', value: 'Photography 📸' },
+  ],
+  other: [
+    { label: 'Coding 💻', value: 'Coding 💻' },
+    { label: 'Debating 🗣️', value: 'Debating 🗣️' },
+    { label: 'Chess ♟️', value: 'Chess ♟️' },
+    { label: 'Gaming 🎮', value: 'Gaming 🎮' },
+    { label: 'Volunteering 🤝', value: 'Volunteering 🤝' },
+  ]
+};
+
 interface ProfileProps {
   username?: string | null; // Null means logged-in user
   onBack?: () => void;
@@ -68,6 +92,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
   // Edit fields
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
+  const [editInterests, setEditInterests] = useState<string[]>([]);
   const [editAvatar, setEditAvatar] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -130,7 +155,8 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
         // 1. Resolve logged-in profile ID
         if (isSupabaseConfigured) {
           const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
+          if (user && user.id !== 'mock-user-id') {
+            // Real Supabase user
             const { data: loggedInRow } = await supabase
               .from('profiles')
               .select('id, username')
@@ -143,6 +169,10 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
                 profileName = loggedInRow.username;
               }
             }
+          } else {
+            // Sandbox bypass mode — use mock user
+            profileName = username || 'alex_dev';
+            setCurrentProfileId(loggedInId);
           }
         } else {
           profileName = username || 'alex_dev';
@@ -150,9 +180,8 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
         }
 
         if (!profileName) {
-          setErrorMsg('No user profile context available.');
-          setLoading(false);
-          return;
+          // Final fallback to sandbox user
+          profileName = 'alex_dev';
         }
 
         // 2. Fetch target profile details
@@ -161,6 +190,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
 
         setEditName(profileData.display_name || '');
         setEditBio(profileData.bio || '');
+        setEditInterests(profileData.interests || []);
         setEditAvatar(profileData.avatar_url || '');
 
         // 3. Fetch follower & following metrics counts
@@ -211,6 +241,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
         ...prev,
         display_name: editName,
         bio: editBio,
+        interests: editInterests,
         avatar_url: editAvatar,
       } : null);
       setIsSaving(false);
@@ -224,6 +255,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
         .update({
           display_name: editName,
           bio: editBio,
+          interests: editInterests,
           avatar_url: editAvatar,
         })
         .eq('id', profile.id);
@@ -234,6 +266,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
         ...prev,
         display_name: editName,
         bio: editBio,
+        interests: editInterests,
         avatar_url: editAvatar,
       } : null);
 
@@ -243,6 +276,14 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleEditTagClick = (tagValue: string) => {
+    setEditInterests((prev) =>
+      prev.includes(tagValue)
+        ? prev.filter((item) => item !== tagValue)
+        : [...prev, tagValue]
+    );
   };
 
   const getBadgeIcon = (type: string) => {
@@ -444,6 +485,25 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
         )}
       </div>
 
+      {/* Interests Section Card */}
+      {profile.interests && profile.interests.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800/80 rounded-xl p-6 shadow-sm mx-5 mt-4 text-left flex flex-col gap-2.5 animate-[fadeIn_0.25s_ease-out]">
+          <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+            Interests & Hobbies
+          </h3>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {profile.interests.map((interest) => (
+              <span
+                key={interest}
+                className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 dark:bg-purple-950/30 text-purple-650 dark:text-purple-400 border border-purple-100 dark:border-purple-900/30 transition-all hover:scale-105"
+              >
+                {interest}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Grid vs Achievements Tabs */}
       <div className="flex border-b border-slate-200 dark:border-slate-800/80 bg-white/50 dark:bg-slate-900/30 mx-5 mt-5">
         <button
@@ -626,6 +686,85 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
                   placeholder="Tell students about yourself"
                   maxLength={300}
                 />
+              </div>
+
+              {/* Interests & Hobbies Selection */}
+              <div className="flex flex-col gap-2 bg-slate-50/50 dark:bg-slate-950/20 p-3 rounded-2xl border border-slate-150 dark:border-slate-800/60 max-h-[160px] overflow-y-auto text-left">
+                <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-1">
+                  Interests & Hobbies
+                </span>
+                
+                {/* Sports */}
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-550 pl-1 uppercase font-black">Sports</span>
+                  <div className="flex flex-wrap gap-1">
+                    {INTEREST_CATEGORIES.sports.map((tag) => {
+                      const isSelected = editInterests.includes(tag.value);
+                      return (
+                        <button
+                          key={tag.value}
+                          type="button"
+                          onClick={() => handleEditTagClick(tag.value)}
+                          className={`px-2.5 py-0.5 rounded-full text-[9px] font-semibold transition-all duration-200 ${
+                            isSelected
+                              ? 'bg-purple-650 text-white shadow-sm'
+                              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-605 dark:text-slate-405 hover:border-purple-305 dark:hover:border-purple-800'
+                          }`}
+                        >
+                          {tag.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Cultural */}
+                <div className="flex flex-col gap-1 mt-1.5">
+                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-550 pl-1 uppercase font-black">Cultural</span>
+                  <div className="flex flex-wrap gap-1">
+                    {INTEREST_CATEGORIES.cultural.map((tag) => {
+                      const isSelected = editInterests.includes(tag.value);
+                      return (
+                        <button
+                          key={tag.value}
+                          type="button"
+                          onClick={() => handleEditTagClick(tag.value)}
+                          className={`px-2.5 py-0.5 rounded-full text-[9px] font-semibold transition-all duration-200 ${
+                            isSelected
+                              ? 'bg-purple-650 text-white shadow-sm'
+                              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-605 dark:text-slate-405 hover:border-purple-305 dark:hover:border-purple-800'
+                          }`}
+                        >
+                          {tag.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Other */}
+                <div className="flex flex-col gap-1 mt-1.5">
+                  <span className="text-[8px] font-bold text-slate-400 dark:text-slate-555 pl-1 uppercase font-black">Other</span>
+                  <div className="flex flex-wrap gap-1">
+                    {INTEREST_CATEGORIES.other.map((tag) => {
+                      const isSelected = editInterests.includes(tag.value);
+                      return (
+                        <button
+                          key={tag.value}
+                          type="button"
+                          onClick={() => handleEditTagClick(tag.value)}
+                          className={`px-2.5 py-0.5 rounded-full text-[9px] font-semibold transition-all duration-200 ${
+                            isSelected
+                              ? 'bg-purple-650 text-white shadow-sm'
+                              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-605 dark:text-slate-405 hover:border-purple-305 dark:hover:border-purple-800'
+                          }`}
+                        >
+                          {tag.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               {/* Avatar Url */}

@@ -104,7 +104,18 @@ export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostC
             upsert: false,
           });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('[Upload Error]', uploadError);
+          // Give specific user-friendly messages for common Supabase errors
+          if (uploadError.message?.includes('Bucket not found') || uploadError.statusCode === '400') {
+            throw new Error('Storage bucket not found. Please run the fix_storage_upload_policy.sql script in your Supabase SQL Editor.');
+          } else if (uploadError.statusCode === '403' || uploadError.message?.includes('policy')) {
+            throw new Error('Upload permission denied. Please run fix_storage_upload_policy.sql in Supabase SQL Editor to fix the storage policy.');
+          } else if (uploadError.message?.includes('duplicate') || uploadError.message?.includes('already exists')) {
+            throw new Error('A file with the same name already exists. Please try again.');
+          }
+          throw uploadError;
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('post-images')
@@ -112,7 +123,8 @@ export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostC
 
         setImageUrl(publicUrl);
       } catch (err: any) {
-        setStatusMsg({ type: 'error', text: err.message || 'Image upload failed.' });
+        console.error('[CreatePost] Image upload failed:', err);
+        setStatusMsg({ type: 'error', text: err.message || 'Image upload failed. Check console for details.' });
       } finally {
         setIsUploading(false);
       }

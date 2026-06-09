@@ -59,6 +59,7 @@ CREATE TABLE public.profiles (
     -- Avatar & bio
     avatar_url      TEXT,       -- S3-compatible object key
     bio             TEXT        CHECK (char_length(bio) <= 300),
+    interests       TEXT[]      NOT NULL DEFAULT '{}',
 
     -- Role & standing
     role            public.user_role NOT NULL DEFAULT 'user',

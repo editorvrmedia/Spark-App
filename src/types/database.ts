@@ -21,6 +21,7 @@ export interface Database {
           display_name: string | null
           avatar_url: string | null
           bio: string | null
+          interests: string[]
           role: UserRole
           is_suspended: boolean
           suspension_reason: string | null
@@ -35,6 +36,7 @@ export interface Database {
           display_name?: string | null
           avatar_url?: string | null
           bio?: string | null
+          interests?: string[]
           role?: UserRole
           is_suspended?: boolean
           suspension_reason?: string | null
@@ -49,6 +51,7 @@ export interface Database {
           display_name?: string | null
           avatar_url?: string | null
           bio?: string | null
+          interests?: string[]
           role?: UserRole
           is_suspended?: boolean
           suspension_reason?: string | null

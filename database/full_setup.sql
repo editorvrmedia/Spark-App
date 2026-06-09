@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     display_name    TEXT,
     avatar_url      TEXT,
     bio             TEXT        CHECK (char_length(bio) <= 300),
+    interests       TEXT[]      NOT NULL DEFAULT '{}',
     role            public.user_role NOT NULL DEFAULT 'user',
     is_suspended    BOOLEAN     NOT NULL DEFAULT FALSE,
     suspension_reason TEXT,
@@ -633,10 +634,11 @@ DROP POLICY IF EXISTS "Allow Public Select on post-images" ON storage.objects;
 CREATE POLICY "Allow Public Select on post-images" ON storage.objects FOR SELECT USING (bucket_id = 'post-images');
 
 DROP POLICY IF EXISTS "Allow Authenticated Insert on post-images" ON storage.objects;
-CREATE POLICY "Allow Authenticated Insert on post-images" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'post-images' AND auth.uid() = owner);
+CREATE POLICY "Allow Authenticated Insert on post-images" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'post-images' AND auth.uid() IS NOT NULL);
 
 DROP POLICY IF EXISTS "Allow Authenticated Owner Modification on post-images" ON storage.objects;
 CREATE POLICY "Allow Authenticated Owner Modification on post-images" ON storage.objects FOR ALL TO authenticated USING (bucket_id = 'post-images' AND auth.uid() = owner);
+
 
 -- ---------------------------------------------------------------------------
 -- 13. System Grants

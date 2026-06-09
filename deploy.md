@@ -30,7 +30,7 @@ Vercel natively supports Vite-based React applications.
 4. **Setup Environment Variables**:
    Under **Environment Variables**, insert the following key-value pairs matching your Supabase configuration:
    - `VITE_SUPABASE_URL` = `https://your-project-id.supabase.co`
-   - `VITE_SUPABASE_ANON_KEY` = `your-anon-key-string`
+   - `VITE_SUPABASE_ANON_KEY` = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzY3Z1cHB2cW1uaXNkcWl6dG9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NzY2ODAsImV4cCI6MjA5NTM1MjY4MH0.upgpWMfr4oz4Rg5IIGEazk99L90xBuMTM6KoyLwplEc`
 5. **Deploy**:
    - Click **Deploy**. Vercel will bundle the optimized chunks and assign a public `.vercel.app` URL.
 

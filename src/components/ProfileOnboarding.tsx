@@ -9,11 +9,39 @@ interface ProfileOnboardingProps {
 }
 
 const PRESET_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop', // Student 1
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop', // Student 2
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop', // Student 3
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=150&auto=format&fit=crop', // Student 4
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Jack',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Vivian',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Aria',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Liam',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Mason',
 ];
+
+const INTEREST_CATEGORIES = {
+  sports: [
+    { label: 'Cricket 🏏', value: 'Cricket 🏏' },
+    { label: 'Football ⚽', value: 'Football ⚽' },
+    { label: 'Basketball 🏀', value: 'Basketball 🏀' },
+    { label: 'Badminton 🏸', value: 'Badminton 🏸' },
+    { label: 'Athletics 🏃', value: 'Athletics 🏃' },
+  ],
+  cultural: [
+    { label: 'Music 🎵', value: 'Music 🎵' },
+    { label: 'Dance 💃', value: 'Dance 💃' },
+    { label: 'Drama 🎭', value: 'Drama 🎭' },
+    { label: 'Art/Painting 🎨', value: 'Art/Painting 🎨' },
+    { label: 'Photography 📸', value: 'Photography 📸' },
+  ],
+  other: [
+    { label: 'Coding 💻', value: 'Coding 💻' },
+    { label: 'Debating 🗣️', value: 'Debating 🗣️' },
+    { label: 'Chess ♟️', value: 'Chess ♟️' },
+    { label: 'Gaming 🎮', value: 'Gaming 🎮' },
+    { label: 'Volunteering 🤝', value: 'Volunteering 🤝' },
+  ]
+};
 
 export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
   session,
@@ -23,6 +51,7 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
   const [step, setStep] = useState(1);
   const [displayName, setDisplayName] = useState(session?.user?.user_metadata?.display_name || '');
   const [bio, setBio] = useState('');
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedAvatar, setSelectedAvatar] = useState(PRESET_AVATARS[0]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -73,6 +102,14 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
     }
   };
 
+  const handleTagClick = (tagValue: string) => {
+    setSelectedInterests((prev) =>
+      prev.includes(tagValue)
+        ? prev.filter((item) => item !== tagValue)
+        : [...prev, tagValue]
+    );
+  };
+
   const handleCompleteSetup = async () => {
     if (!displayName.trim()) {
       setErrorMsg('Please enter a display name.');
@@ -105,6 +142,7 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
           .update({
             display_name: displayName.trim(),
             bio: bio.trim(),
+            interests: selectedInterests,
             avatar_url: selectedAvatar,
           })
           .eq('user_id', session.user.id);
@@ -122,6 +160,7 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
             username: fallbackUsername,
             display_name: displayName.trim(),
             bio: bio.trim(),
+            interests: selectedInterests,
             avatar_url: selectedAvatar,
             role: 'user',
             is_suspended: false,
@@ -222,9 +261,28 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
               </span>
 
               {/* Bio */}
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-3 line-clamp-4 leading-relaxed px-1 select-none italic">
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-3 line-clamp-2 leading-relaxed px-1 select-none italic">
                 {bio.trim() ? `"${bio.trim()}"` : '"St. Brittos student profile..."'}
               </p>
+
+              {/* Selected Interests Preview */}
+              {selectedInterests.length > 0 && (
+                <div className="flex flex-wrap gap-1 justify-center mt-2.5 max-h-[50px] overflow-hidden w-full px-1">
+                  {selectedInterests.slice(0, 3).map((interest) => (
+                    <span
+                      key={interest}
+                      className="px-1.5 py-0.5 rounded-full text-[7.5px] font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-100/50 dark:border-purple-900/30"
+                    >
+                      {interest}
+                    </span>
+                  ))}
+                  {selectedInterests.length > 3 && (
+                    <span className="text-[7.5px] font-bold text-slate-450 self-center">
+                      +{selectedInterests.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="relative z-10 mt-4 pt-3 border-t border-slate-150 dark:border-slate-900/50 flex flex-col gap-0.5 items-center">
@@ -367,6 +425,85 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
                       className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 px-4 py-3 pl-10 rounded-2xl text-xs focus:outline-none focus:border-purple-500 text-slate-800 dark:text-slate-100 shadow-sm font-semibold leading-relaxed resize-none"
                     />
                     <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                  </div>
+                </div>
+
+                {/* Quick interest tags helper */}
+                <div className="flex flex-col gap-2.5 mt-0.5 bg-slate-50/50 dark:bg-slate-950/20 p-4 rounded-2xl border border-slate-150 dark:border-slate-800/60 text-left">
+                  <span className="text-[9px] font-black text-slate-450 dark:text-slate-400 uppercase tracking-widest pl-1">
+                    Select Interests & Hobbies (Click to toggle)
+                  </span>
+                  
+                  {/* Sports */}
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 pl-1">SPORTS & ATHLETICS</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {INTEREST_CATEGORIES.sports.map((tag) => {
+                        const isSelected = selectedInterests.includes(tag.value);
+                        return (
+                          <button
+                            key={tag.value}
+                            type="button"
+                            onClick={() => handleTagClick(tag.value)}
+                            className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all duration-200 ${
+                              isSelected
+                                ? 'bg-purple-650 text-white shadow-sm shadow-purple-500/20 scale-95'
+                                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-855 hover:scale-105 active:scale-95'
+                            }`}
+                          >
+                            {tag.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Cultural */}
+                  <div className="flex flex-col gap-1.5 mt-1">
+                    <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 pl-1">ARTS & CULTURAL</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {INTEREST_CATEGORIES.cultural.map((tag) => {
+                        const isSelected = selectedInterests.includes(tag.value);
+                        return (
+                          <button
+                            key={tag.value}
+                            type="button"
+                            onClick={() => handleTagClick(tag.value)}
+                            className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all duration-200 ${
+                              isSelected
+                                ? 'bg-purple-650 text-white shadow-sm shadow-purple-500/20 scale-95'
+                                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-855 hover:scale-105 active:scale-95'
+                            }`}
+                          >
+                            {tag.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Other */}
+                  <div className="flex flex-col gap-1.5 mt-1">
+                    <span className="text-[8px] font-bold text-slate-400 dark:text-slate-550 pl-1 font-black">OTHER INTERESTS</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {INTEREST_CATEGORIES.other.map((tag) => {
+                        const isSelected = selectedInterests.includes(tag.value);
+                        return (
+                          <button
+                            key={tag.value}
+                            type="button"
+                            onClick={() => handleTagClick(tag.value)}
+                            className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all duration-200 ${
+                              isSelected
+                                ? 'bg-purple-650 text-white shadow-sm shadow-purple-500/20 scale-95'
+                                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-855 hover:scale-105 active:scale-95'
+                            }`}
+                          >
+                            {tag.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
