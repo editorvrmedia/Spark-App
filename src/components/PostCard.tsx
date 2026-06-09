@@ -92,6 +92,13 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [loadingComments, setLoadingComments] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  // Dropdown menu & deletion states
+  const [showMenu, setShowMenu] = useState(false);
+  const [isDeletedLocal, setIsDeletedLocal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<'user' | 'moderator' | 'admin'>('user');
+  const [currentUserUsername, setCurrentUserUsername] = useState<string>('');
+
   // Sync state with parent props updates
   useEffect(() => {
     setLocalLikes(likesCount);
@@ -116,16 +123,23 @@ export const PostCard: React.FC<PostCardProps> = ({
           if (user && active) {
             const { data: prof } = await supabase
               .from('profiles')
-              .select('id')
+              .select('id, role, username')
               .eq('user_id', user.id)
               .single();
             if (prof) {
               pId = prof.id;
               setCurrentProfileId(pId);
+              setCurrentUserRole(prof.role);
+              setCurrentUserUsername(prof.username);
             }
           }
         } catch (e) {
           console.error('Failed to load user profile in card:', e);
+        }
+      } else {
+        if (active) {
+          setCurrentUserUsername('alex_dev');
+          setCurrentUserRole('admin');
         }
       }
 
@@ -215,11 +229,46 @@ export const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
+  const handleDeletePost = async () => {
+    if (!window.confirm('Are you sure you want to delete this spark?')) return;
+    setIsDeleting(true);
+    const isSupabaseConfigured =
+      import.meta.env.VITE_SUPABASE_URL &&
+      import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+    if (!isSupabaseConfigured) {
+      const allPosts = JSON.parse(sessionStorage.getItem('spark-mock-posts') || '[]');
+      const updated = allPosts.filter((p: any) => p.id !== postId);
+      sessionStorage.setItem('spark-mock-posts', JSON.stringify(updated));
+      setIsDeletedLocal(true);
+      setIsDeleting(false);
+      setShowMenu(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', postId);
+
+      if (error) throw error;
+      setIsDeletedLocal(true);
+    } catch (e: any) {
+      alert('Failed to delete post: ' + e.message);
+    } finally {
+      setIsDeleting(false);
+      setShowMenu(false);
+    }
+  };
+
   const getInitials = (name: string) => {
     return name.slice(0, 2).toUpperCase();
   };
 
   const mainImageUrl = mediaUrls.length > 0 ? mediaUrls[0] : null;
+
+  if (isDeletedLocal) return null;
 
   return (
     <article className="w-full bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800/60 py-4 animate-fade-in">
@@ -277,9 +326,48 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
 
         {/* 44x44px touch target for menu button */}
-        <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors w-11 h-11 flex items-center justify-center rounded-full focus:outline-none">
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
+        <div className="relative">
+          <button 
+            onClick={() => setShowMenu(prev => !prev)}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors w-11 h-11 flex items-center justify-center rounded-full focus:outline-none"
+            aria-label="Options"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+          
+          {showMenu && (
+            <>
+              {/* Invisible overlay to close dropdown when clicking outside */}
+              <div 
+                className="fixed inset-0 z-30" 
+                onClick={() => setShowMenu(false)}
+              />
+              <div className="absolute right-0 mt-1 w-44 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-lg py-1.5 z-40 animate-fade-in text-left">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleShare();
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 focus:outline-none"
+                >
+                  <span>🔗</span> Copy Link
+                </button>
+                
+                {(currentUserUsername === username || currentUserRole === 'admin' || currentUserRole === 'moderator') && (
+                  <button
+                    type="button"
+                    onClick={handleDeletePost}
+                    disabled={isDeleting}
+                    className="w-full px-4 py-2 text-xs font-bold text-red-650 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 flex items-center gap-2 focus:outline-none disabled:opacity-50"
+                  >
+                    <span>🗑️</span> {isDeleting ? 'Deleting...' : 'Delete Spark'}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Main Card Content */}

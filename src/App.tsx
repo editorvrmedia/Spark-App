@@ -11,6 +11,7 @@ import { Search, Loader2, TrendingUp } from 'lucide-react';
 
 import { supabase } from './lib/supabaseClient';
 import { ProfileOnboarding } from './components/ProfileOnboarding';
+import { FollowButton } from './components/FollowButton';
 
 
 function App() {
@@ -615,15 +616,17 @@ function App() {
             <div className="flex flex-col gap-3.5">
               {[
                 {
-                  username: 'marcus_l',
-                  display_name: 'Marcus Lin',
-                  role: 'AI Researcher',
+                  id: 'auth-j_vane',
+                  username: 'j_vane',
+                  display_name: 'Julian Vane',
+                  role: 'Interaction Designer',
                   avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop',
                 },
                 {
-                  username: 'aria_t',
-                  display_name: 'Aria Thorne',
-                  role: 'UX Strategy',
+                  id: 'auth-elena_dev',
+                  username: 'elena_dev',
+                  display_name: 'Elena Stark',
+                  role: 'Fullstack Architect',
                   avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop',
                 }
               ].map(u => (
@@ -643,9 +646,12 @@ function App() {
                       <span className="text-[10px] text-slate-400 leading-normal">{u.role}</span>
                     </div>
                   </div>
-                  <button className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-slate-950 rounded-full text-[11px] font-bold transition-all focus:outline-none select-none">
-                    Follow
-                  </button>
+                  {currentProfileId && (
+                    <FollowButton
+                      targetProfileId={u.id}
+                      currentProfileId={currentProfileId}
+                    />
+                  )}
                 </div>
               ))}
             </div>
