@@ -209,14 +209,23 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
           // Fetch posts
           const { data: postsData, error: postsError } = await supabase
             .from('posts')
-            .select('*')
+            .select(`
+              *,
+              likes(count),
+              comments(count)
+            `)
             .eq('author_id', profileData.id)
             .eq('status', 'approved')
             .is('deleted_at', null)
             .order('created_at', { ascending: false });
 
           if (!postsError && postsData) {
-            setPosts(postsData);
+            const formatted = postsData.map((post: any) => ({
+              ...post,
+              likes_count: post.likes?.[0]?.count ?? 0,
+              comments_count: post.comments?.[0]?.count ?? 0
+            }));
+            setPosts(formatted);
           }
         }
       } catch (err: any) {
@@ -553,8 +562,8 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
                       body={post.body}
                       mediaUrls={post.image_url ? [post.image_url, ...post.media_urls] : post.media_urls}
                       timestamp={dateStr}
-                      likesCount={15}
-                      commentsCount={3}
+                      likesCount={(post as any).likes_count !== undefined ? (post as any).likes_count : 15}
+                      commentsCount={(post as any).comments_count !== undefined ? (post as any).comments_count : 3}
                       status={post.status}
                     />
                   );
