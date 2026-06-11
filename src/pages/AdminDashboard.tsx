@@ -15,6 +15,8 @@ interface PostWithAuthor extends DBPost {
 interface AdminDashboardProps {
   onRedirectToHome?: () => void;
   userEmail?: string;
+  onLogOut?: () => void;
+  isExclusiveAdmin?: boolean;
 }
 
 // Initial mock pending posts for role simulator
@@ -83,7 +85,12 @@ const INITIAL_MOCK_PENDING: PostWithAuthor[] = [
   }
 ];
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome, userEmail }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
+  onRedirectToHome, 
+  userEmail, 
+  onLogOut, 
+  isExclusiveAdmin 
+}) => {
   const [currentUserRole, setCurrentUserRole] = useState<'user' | 'moderator' | 'admin'>('moderator');
   const [pendingPosts, setPendingPosts] = useState<PostWithAuthor[]>([]);
   const [riskScores, setRiskScores] = useState<Record<string, ModerationScore>>({});
@@ -103,10 +110,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome
       setLoading(true);
       setErrorMsg(null);
 
+      if (isExclusiveAdmin) {
+        setCurrentUserRole('admin');
+        if (!isSupabaseConfigured) {
+          const posts = INITIAL_MOCK_PENDING;
+          setPendingPosts(posts);
+          const scores: Record<string, ModerationScore> = {};
+          posts.forEach(p => { scores[p.id] = computeHeuristicScore(p.title, p.body); });
+          setRiskScores(scores);
+          setLoading(false);
+          return;
+        }
+        try {
+          await fetchPendingQueue();
+        } catch (err: any) {
+          setErrorMsg(err.message || 'An error occurred during verification.');
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
       if (!isSupabaseConfigured) {
         // Simulation mode
         const mockEmail = userEmail || '';
-        const whitelistedMails = ['admin1@stbrittosacademy.edu.in', 'admin2@stbrittosacademy.edu.in'];
+        const whitelistedMails = ['admin1@stbrittosacademy.edu.in', 'admin2@stbrittosacademy.edu.in', 'sriram@stbrittosacademy.edu.in'];
         const isSimulatedAdmin = whitelistedMails.includes(mockEmail.toLowerCase());
         
         if (!isSimulatedAdmin) {
@@ -174,7 +202,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome
     }
 
     initDashboard();
-  }, [isSupabaseConfigured, userEmail, onRedirectToHome]);
+  }, [isSupabaseConfigured, userEmail, onRedirectToHome, isExclusiveAdmin]);
 
   // Client-side access guard: redirect if user is not a moderator
   useEffect(() => {
@@ -300,6 +328,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onRedirectToHome
         </div>
 
         <div className="flex items-center gap-2">
+          {onLogOut && (
+            <button
+              onClick={onLogOut}
+              className="flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 active:scale-[0.98] text-red-600 dark:bg-red-950/20 dark:hover:bg-red-950/40 dark:text-red-400 rounded-xl text-xs font-bold transition-all focus:outline-none"
+            >
+              Log Out
+            </button>
+          )}
+
           {/* Simulated role selector for early testing & demo */}
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">
             <span className="text-[10px] font-bold text-slate-500 uppercase">Simulate:</span>

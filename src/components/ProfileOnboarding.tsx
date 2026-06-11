@@ -49,7 +49,19 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
   onComplete,
 }) => {
   const [step, setStep] = useState(1);
-  const [displayName, setDisplayName] = useState(session?.user?.user_metadata?.display_name || '');
+  const getDefaultDisplayName = () => {
+    if (session?.user?.user_metadata?.display_name) {
+      return session.user.user_metadata.display_name;
+    }
+    const emailVal = session?.user?.email || '';
+    if (emailVal) {
+      const localPart = emailVal.split('@')[0] || '';
+      const namePart = localPart.split(/[._\-\d]/)[0] || localPart;
+      return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    }
+    return '';
+  };
+  const [displayName, setDisplayName] = useState(getDefaultDisplayName());
   const [bio, setBio] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedAvatar, setSelectedAvatar] = useState(PRESET_AVATARS[0]);
@@ -150,8 +162,17 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
         if (updateError) throw updateError;
       } else {
         // Insert missing profile
-        const fallbackUsername = session.user.user_metadata?.username || 
-          'user_' + session.user.id.replace(/-/g, '').slice(0, 8);
+        let fallbackUsername = session.user.user_metadata?.username;
+        if (!fallbackUsername) {
+          const emailVal = session?.user?.email || '';
+          if (emailVal) {
+            const localPart = emailVal.split('@')[0] || '';
+            fallbackUsername = (localPart.split(/[._\-\d]/)[0] || localPart).toLowerCase();
+          }
+        }
+        if (!fallbackUsername) {
+          fallbackUsername = 'user_' + session.user.id.replace(/-/g, '').slice(0, 8);
+        }
         
         const { data: insertedData, error: insertError } = await supabase
           .from('profiles')

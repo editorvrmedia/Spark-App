@@ -83,7 +83,7 @@ function App() {
         setCurrentProfileId(null);
       } else {
         const mockEmail = session.user?.email || '';
-        const whitelistedMails = ['admin1@stbrittosacademy.edu.in', 'admin2@stbrittosacademy.edu.in'];
+        const whitelistedMails = ['admin1@stbrittosacademy.edu.in', 'admin2@stbrittosacademy.edu.in', 'sriram@stbrittosacademy.edu.in'];
         setIsAdmin(whitelistedMails.includes(mockEmail.toLowerCase()));
         setCurrentProfileId('auth-2'); // default to alex_dev in mock sandbox
       }
@@ -263,6 +263,24 @@ function App() {
           setShowOnboarding(true);
         }}
       />
+    );
+  }
+
+  const EXCLUSIVE_ADMIN_MAILS = ['admin1@stbrittosacademy.edu.in', 'admin2@stbrittosacademy.edu.in', 'sriram@stbrittosacademy.edu.in'];
+  const isExclusiveAdmin = !!(session?.user?.email && EXCLUSIVE_ADMIN_MAILS.includes(session.user.email.toLowerCase()));
+
+  // Render exclusive admin view directly, bypassing standard website layout & onboarding
+  if (isExclusiveAdmin) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex relative overflow-x-hidden">
+        <div className="flex-1 w-full max-w-7xl mx-auto flex flex-col items-center justify-center p-4">
+          <AdminDashboard 
+            userEmail={session.user.email} 
+            onLogOut={handleLogOut} 
+            isExclusiveAdmin={true} 
+          />
+        </div>
+      </div>
     );
   }
 

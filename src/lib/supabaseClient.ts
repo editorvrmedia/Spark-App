@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../types/database';
 
-const rawUrl = import.meta.env.VITE_SUPABASE_URL;
-const rawAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const rawUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+const rawAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
 const isValidUrl = (url: string | undefined): boolean => {
   if (!url) return false;

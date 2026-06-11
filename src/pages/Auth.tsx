@@ -16,10 +16,30 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [usernameTouched, setUsernameTouched] = useState(false);
+  const [displayNameTouched, setDisplayNameTouched] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const handleEmailChange = (val: string) => {
+    setEmail(val);
+    if (isSignUp) {
+      const localPart = val.split('@')[0] || '';
+      if (localPart) {
+        const extracted = localPart.split(/[._\-\d]/)[0] || localPart;
+        if (extracted) {
+          if (!usernameTouched) {
+            setUsername(extracted.toLowerCase());
+          }
+          if (!displayNameTouched) {
+            setDisplayName(extracted.charAt(0).toUpperCase() + extracted.slice(1));
+          }
+        }
+      }
+    }
+  };
 
   const isSupabaseConfigured =
     import.meta.env.VITE_SUPABASE_URL &&
@@ -192,7 +212,13 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
           {/* Tab selector */}
           <div className="flex bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl">
             <button
-              onClick={() => { setIsSignUp(false); setErrorMsg(null); setSuccessMsg(null); }}
+              onClick={() => {
+                setIsSignUp(false);
+                setErrorMsg(null);
+                setSuccessMsg(null);
+                setUsernameTouched(false);
+                setDisplayNameTouched(false);
+              }}
               className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
                 !isSignUp 
                   ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-sm' 
@@ -202,7 +228,13 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
               Log In
             </button>
             <button
-              onClick={() => { setIsSignUp(true); setErrorMsg(null); setSuccessMsg(null); }}
+              onClick={() => {
+                setIsSignUp(true);
+                setErrorMsg(null);
+                setSuccessMsg(null);
+                setUsernameTouched(false);
+                setDisplayNameTouched(false);
+              }}
               className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
                 isSignUp 
                   ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-sm' 
@@ -247,7 +279,10 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
                     <input
                       type="text"
                       value={username}
-                      onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))}
+                      onChange={(e) => {
+                        setUsername(e.target.value.toLowerCase().replace(/\s/g, ''));
+                        setUsernameTouched(true);
+                      }}
                       className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 pl-10 pr-3.5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-purple-500 text-slate-850 dark:text-slate-100 font-semibold"
                       placeholder="e.g. janesmith"
                       required
@@ -265,7 +300,10 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
                     <input
                       type="text"
                       value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
+                      onChange={(e) => {
+                        setDisplayName(e.target.value);
+                        setDisplayNameTouched(true);
+                      }}
                       className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 pl-10 pr-3.5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-purple-500 text-slate-850 dark:text-slate-100 font-semibold"
                       placeholder="e.g. Jane Smith"
                       required
@@ -287,7 +325,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess, onBypass }) => {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => handleEmailChange(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 pl-10 pr-3.5 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-purple-500 text-slate-850 dark:text-slate-100 font-semibold"
                   placeholder="Enter email"
                   required

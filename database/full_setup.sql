@@ -92,7 +92,8 @@ CREATE TABLE IF NOT EXISTS public.admin_whitelist (
 -- Seed admins
 INSERT INTO public.admin_whitelist (email) VALUES 
 ('admin1@stbrittosacademy.edu.in'),
-('admin2@stbrittosacademy.edu.in')
+('admin2@stbrittosacademy.edu.in'),
+('sriram@stbrittosacademy.edu.in')
 ON CONFLICT (email) DO NOTHING;
 
 -- ---------------------------------------------------------------------------
@@ -260,24 +261,52 @@ DECLARE
     new_username CITEXT;
     new_display_name TEXT;
     assigned_role public.user_role;
+    username_exists BOOLEAN;
+    base_username CITEXT;
+    suffix_counter INT := 1;
 BEGIN
+    -- 1. Extract metadata from raw_user_meta_data if present, else fallback to email part, else default fallback
     new_username := COALESCE(
         (NEW.raw_user_meta_data->>'username')::CITEXT, 
-        'user_' || substring(NEW.id::text from 1 for 8)
+        (SELECT (regexp_split_to_array(split_part(NEW.email, '@', 1), '[._0-9-]'))[1])::CITEXT,
+        ('user_' || substring(NEW.id::text from 1 for 8))::CITEXT
     );
     
+    -- Ensure username is not empty and is at least 3 characters
+    IF new_username IS NULL OR length(new_username) < 3 THEN
+        new_username := 'user_' || substring(NEW.id::text from 1 for 8);
+    END IF;
+
+    -- Avoid username duplicates by checking and appending unique values if necessary
+    base_username := new_username;
+    LOOP
+        SELECT EXISTS (
+            SELECT 1 FROM public.profiles WHERE username = new_username
+        ) INTO username_exists;
+        
+        EXIT WHEN NOT username_exists;
+        
+        -- Append unique suffix if it exists
+        new_username := base_username || suffix_counter::text;
+        suffix_counter := suffix_counter + 1;
+    END LOOP;
+
+    -- 2. Resolve display name
     new_display_name := COALESCE(
         NEW.raw_user_meta_data->>'display_name',
         NEW.raw_user_meta_data->>'username',
+        initcap((SELECT (regexp_split_to_array(split_part(NEW.email, '@', 1), '[._0-9-]'))[1])),
         'Spark Student'
     );
 
+    -- 3. Resolve role
     IF EXISTS (SELECT 1 FROM public.admin_whitelist WHERE email = NEW.email) THEN
         assigned_role := 'admin';
     ELSE
         assigned_role := 'user';
     END IF;
 
+    -- 4. Upsert profile to prevent user_id unique violations
     INSERT INTO public.profiles (
         user_id,
         username,
@@ -290,25 +319,14 @@ BEGIN
         new_display_name,
         assigned_role,
         FALSE
-    );
+    )
+    ON CONFLICT (user_id) DO UPDATE SET
+        username = EXCLUDED.username,
+        display_name = EXCLUDED.display_name,
+        role = EXCLUDED.role,
+        deleted_at = NULL; -- Reactivate if soft-deleted
 
     RETURN NEW;
-EXCEPTION
-    WHEN unique_violation THEN
-        INSERT INTO public.profiles (
-            user_id,
-            username,
-            display_name,
-            role,
-            is_suspended
-        ) VALUES (
-            NEW.id,
-            new_username || '_' || substring(NEW.id::text from 1 for 4),
-            new_display_name,
-            assigned_role,
-            FALSE
-        );
-        RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
