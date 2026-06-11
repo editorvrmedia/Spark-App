@@ -104,7 +104,7 @@ function App() {
           .from('profiles')
           .select('id, role, bio')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
 
         let isUserAdmin = false;
         try {
@@ -125,6 +125,8 @@ function App() {
         } else {
           setCurrentProfileId(null);
           setIsAdmin(isUserAdmin);
+          // If no profile row exists, show onboarding to set it up
+          setShowOnboarding(true);
         }
       } catch (err) {
         console.error('Failed to load session profile role or admin status:', err);

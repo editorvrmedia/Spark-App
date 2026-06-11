@@ -125,7 +125,7 @@ export const PostCard: React.FC<PostCardProps> = ({
               .from('profiles')
               .select('id, role, username')
               .eq('user_id', user.id)
-              .single();
+              .maybeSingle();
             if (prof) {
               pId = prof.id;
               setCurrentProfileId(pId);

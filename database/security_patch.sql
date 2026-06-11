@@ -11,7 +11,7 @@
 -- Prevents authenticated users from spoofing follower identities and forcing
 -- other users to follow/unfollow profiles.
 CREATE OR REPLACE FUNCTION public.toggle_follow(follower_id_param UUID, following_id_param UUID)
-RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER AS $$
+RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 DECLARE
     is_following BOOLEAN;
     calling_profile_id UUID;
@@ -65,7 +65,7 @@ CREATE POLICY posts_update_own_content
 
 -- B. Create trigger function to enforce post status and lifecycle validation
 CREATE OR REPLACE FUNCTION public.check_post_update_privileges()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 BEGIN
     -- Check if status is being modified
     IF OLD.status IS DISTINCT FROM NEW.status THEN
@@ -85,7 +85,7 @@ BEGIN
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- C. Register the trigger
 DROP TRIGGER IF EXISTS trg_check_post_update_privileges ON public.posts;
@@ -103,7 +103,7 @@ COMMENT ON FUNCTION public.check_post_update_privileges() IS 'Enforces post life
 
 -- A. Create trigger function to validate profile modifications
 CREATE OR REPLACE FUNCTION public.check_profile_update_privileges()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 BEGIN
     -- Restrict role and suspension status changes to whitelisted admins
     IF (OLD.role IS DISTINCT FROM NEW.role OR OLD.is_suspended IS DISTINCT FROM NEW.is_suspended) THEN
@@ -116,7 +116,7 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- B. Register the trigger
 DROP TRIGGER IF EXISTS trg_check_profile_update_privileges ON public.profiles;

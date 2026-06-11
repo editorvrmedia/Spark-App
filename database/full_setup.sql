@@ -138,7 +138,7 @@ CREATE INDEX IF NOT EXISTS idx_modq_unreviewed   ON moderation.moderation_queue 
 -- 6. Helper Functions & Triggers
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.set_updated_at()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
@@ -146,7 +146,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.set_published_at_on_approve()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
 BEGIN
     IF NEW.status = 'approved' AND OLD.status <> 'approved' THEN
         NEW.published_at = NOW();
@@ -156,7 +156,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION moderation.set_reviewed_at()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SET search_path = moderation, public, pg_temp AS $$
 BEGIN
     IF NEW.action IS NOT NULL AND OLD.action IS NULL THEN
         NEW.reviewed_at = NOW();
@@ -193,7 +193,7 @@ CREATE TRIGGER trg_modq_reviewed_at
 
 -- Enqueue trigger
 CREATE OR REPLACE FUNCTION public.enqueue_post_for_moderation()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 BEGIN
     INSERT INTO moderation.moderation_queue (post_id)
     VALUES (NEW.id);
@@ -208,7 +208,7 @@ CREATE TRIGGER trg_posts_enqueue
 
 -- Current Profile Helper
 CREATE OR REPLACE FUNCTION public.current_profile()
-RETURNS public.profiles LANGUAGE sql STABLE SECURITY DEFINER AS $$
+RETURNS public.profiles LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
     SELECT * FROM public.profiles
     WHERE user_id = auth.uid()
       AND deleted_at IS NULL
@@ -231,13 +231,13 @@ CREATE INDEX IF NOT EXISTS idx_follows_follower   ON public.follows (follower_id
 CREATE INDEX IF NOT EXISTS idx_follows_following  ON public.follows (following_id);
 
 CREATE OR REPLACE FUNCTION public.get_follower_count(profile_id UUID)
-RETURNS BIGINT LANGUAGE sql STABLE SECURITY DEFINER AS $$
+RETURNS BIGINT LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public, pg_temp AS $$
     SELECT COUNT(*) FROM public.follows
     WHERE following_id = profile_id;
 $$;
 
 CREATE OR REPLACE FUNCTION public.get_following_count(profile_id UUID)
-RETURNS BIGINT LANGUAGE sql STABLE SECURITY DEFINER AS $$
+RETURNS BIGINT LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public, pg_temp AS $$
     SELECT COUNT(*) FROM public.follows
     WHERE follower_id = profile_id;
 $$;
@@ -257,7 +257,7 @@ CREATE TABLE IF NOT EXISTS public.achievements (
 CREATE INDEX IF NOT EXISTS idx_achievements_profile_id ON public.achievements (profile_id);
 
 CREATE OR REPLACE FUNCTION public.handle_new_user_signup()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 DECLARE
     new_username CITEXT;
     new_display_name TEXT;
@@ -329,7 +329,7 @@ BEGIN
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_auth_user_created ON auth.users;
 CREATE TRIGGER trg_auth_user_created
@@ -339,7 +339,7 @@ CREATE TRIGGER trg_auth_user_created
 
 -- Admin whitelist triggers
 CREATE OR REPLACE FUNCTION public.sync_admin_whitelist_role()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 BEGIN
     IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
         UPDATE public.profiles
@@ -356,7 +356,7 @@ BEGIN
     END IF;
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_sync_admin_whitelist_role ON public.admin_whitelist;
 CREATE TRIGGER trg_sync_admin_whitelist_role
@@ -364,7 +364,7 @@ CREATE TRIGGER trg_sync_admin_whitelist_role
     FOR EACH ROW EXECUTE FUNCTION public.sync_admin_whitelist_role();
 
 CREATE OR REPLACE FUNCTION public.sync_profile_role_on_email_change()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 BEGIN
     IF NEW.email IS DISTINCT FROM OLD.email THEN
         IF EXISTS (SELECT 1 FROM public.admin_whitelist WHERE email = NEW.email) THEN
@@ -379,7 +379,7 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_sync_profile_role_on_email_change ON auth.users;
 CREATE TRIGGER trg_sync_profile_role_on_email_change
@@ -436,7 +436,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- A. is_admin() RPC
 CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER AS $$
+RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 FROM public.admin_whitelist
@@ -447,7 +447,7 @@ $$;
 
 -- B. toggle_follow() with IDOR safety check
 CREATE OR REPLACE FUNCTION public.toggle_follow(follower_id_param UUID, following_id_param UUID)
-RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER AS $$
+RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 DECLARE
     is_following BOOLEAN;
     calling_profile_id UUID;
@@ -477,7 +477,7 @@ $$;
 
 -- C. Profiles Update Protection Trigger (Security Patch)
 CREATE OR REPLACE FUNCTION public.check_profile_update_privileges()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 BEGIN
     IF (OLD.role IS DISTINCT FROM NEW.role OR OLD.is_suspended IS DISTINCT FROM NEW.is_suspended) THEN
         IF NOT EXISTS (
@@ -489,7 +489,7 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_check_profile_update_privileges ON public.profiles;
 CREATE TRIGGER trg_check_profile_update_privileges
@@ -498,7 +498,7 @@ CREATE TRIGGER trg_check_profile_update_privileges
 
 -- D. Posts Status Modification trigger (Security Patch)
 CREATE OR REPLACE FUNCTION public.check_post_update_privileges()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 BEGIN
     IF OLD.status IS DISTINCT FROM NEW.status THEN
         IF NOT EXISTS (
@@ -515,7 +515,7 @@ BEGIN
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS trg_check_post_update_privileges ON public.posts;
 CREATE TRIGGER trg_check_post_update_privileges
@@ -650,7 +650,7 @@ CREATE POLICY bookmarks_delete_own ON public.bookmarks FOR DELETE USING (profile
 
 -- ── Storage Bucket Policies ──
 DROP POLICY IF EXISTS "Allow Public Select on post-images" ON storage.objects;
-CREATE POLICY "Allow Public Select on post-images" ON storage.objects FOR SELECT USING (bucket_id = 'post-images');
+CREATE POLICY "Allow Public Select on post-images" ON storage.objects FOR SELECT USING (bucket_id = 'post-images' AND (owner = auth.uid() OR auth.role() = 'authenticated'));
 
 DROP POLICY IF EXISTS "Allow Authenticated Insert on post-images" ON storage.objects;
 CREATE POLICY "Allow Authenticated Insert on post-images" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'post-images' AND auth.uid() IS NOT NULL);
@@ -678,10 +678,37 @@ GRANT SELECT, INSERT, DELETE ON public.likes               TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.comments    TO authenticated;
 GRANT SELECT, INSERT, DELETE ON public.bookmarks           TO authenticated;
 
-GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated, anon;
+-- Revoke default PUBLIC execute on all triggers and functions
+REVOKE EXECUTE ON FUNCTION moderation.set_reviewed_at() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_on_like() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_on_comment() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_on_follow() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_on_post_status_change() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user_signup() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.set_updated_at() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.set_published_at_on_approve() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.enqueue_post_for_moderation() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.check_profile_update_privileges() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.check_post_update_privileges() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.sync_admin_whitelist_role() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.sync_profile_role_on_email_change() FROM PUBLIC, anon, authenticated;
+
+-- Client-facing RPC permissions
+REVOKE EXECUTE ON FUNCTION public.is_admin() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.current_profile() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.current_profile() TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.toggle_follow(UUID, UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.toggle_follow(UUID, UUID) TO authenticated;
+
+-- get_follower_count and get_following_count are SECURITY INVOKER functions
+REVOKE EXECUTE ON FUNCTION public.get_follower_count(UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_follower_count(UUID) TO authenticated, anon;
+
+REVOKE EXECUTE ON FUNCTION public.get_following_count(UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_following_count(UUID) TO authenticated, anon;
-GRANT EXECUTE ON FUNCTION public.toggle_follow(UUID, UUID) TO authenticated, anon;
 
 GRANT ALL ON public.profiles               TO service_role;
 GRANT ALL ON public.posts                  TO service_role;

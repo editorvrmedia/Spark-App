@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { fetchProfile, ProfileWithAchievements } from '../lib/api';
+import { fetchProfile, ProfileWithAchievements, isUuid } from '../lib/api';
 import { FollowButton } from '../components/FollowButton';
 import { PostCard } from '../components/PostCard';
 import { Database } from '../types/database';
@@ -161,7 +161,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
               .from('profiles')
               .select('id, username')
               .eq('user_id', user.id)
-              .single();
+              .maybeSingle();
             if (loggedInRow) {
               loggedInId = loggedInRow.id;
               setCurrentProfileId(loggedInId);
@@ -194,7 +194,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
         setEditAvatar(profileData.avatar_url || '');
 
         // 3. Fetch follower & following metrics counts
-        if (!isSupabaseConfigured) {
+        if (!isSupabaseConfigured || !isUuid(profileData.id)) {
           // Simulation default metrics
           setFollowersCount(profileData.username === 'spark_team' ? 128 : 45);
           setFollowingCount(profileData.username === 'spark_team' ? 8 : 124);
@@ -244,7 +244,7 @@ export const Profile: React.FC<ProfileProps> = ({ username, onBack }) => {
     if (!profile) return;
     setIsSaving(true);
 
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !isUuid(profile.id)) {
       await new Promise(resolve => setTimeout(resolve, 600));
       setProfile(prev => prev ? {
         ...prev,

@@ -575,7 +575,7 @@ export async function fetchPosts(pageParam: number, currentProfileId: string | n
     `)
     .is('deleted_at', null);
 
-  if (currentProfileId) {
+  if (currentProfileId && isUuid(currentProfileId)) {
     queryBuilder = queryBuilder.or(`status.eq.approved,author_id.eq.${currentProfileId}`);
   } else {
     queryBuilder = queryBuilder.eq('status', 'approved');
@@ -738,7 +738,7 @@ export async function fetchNotifications(profileId: string): Promise<AppNotifica
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || !isUuid(profileId)) {
     await new Promise(resolve => setTimeout(resolve, 250));
     return MOCK_NOTIFICATIONS.filter(n => n.recipient_id === profileId);
   }
@@ -769,7 +769,7 @@ export async function markNotificationRead(notificationId: string): Promise<void
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || !isUuid(notificationId)) {
     const n = MOCK_NOTIFICATIONS.find(n => n.id === notificationId);
     if (n) n.read = true;
     return;
@@ -786,7 +786,7 @@ export async function markAllNotificationsRead(profileId: string): Promise<void>
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || !isUuid(profileId)) {
     MOCK_NOTIFICATIONS.forEach(n => { if (n.recipient_id === profileId) n.read = true; });
     return;
   }
@@ -806,7 +806,7 @@ export function subscribeToNotifications(
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) return () => {};
+  if (!isSupabaseConfigured || !isUuid(profileId)) return () => {};
 
   const channel = supabase
     .channel(`notifications:${profileId}`)
@@ -892,7 +892,7 @@ export async function fetchConversations(profileId: string): Promise<Conversatio
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || !isUuid(profileId)) {
     await new Promise(resolve => setTimeout(resolve, 250));
     const dms = initMockDMs();
     const partnerIds = new Set<string>();
@@ -933,7 +933,7 @@ export async function fetchMessages(
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || !isUuid(profileId) || !isUuid(otherProfileId)) {
     await new Promise(resolve => setTimeout(resolve, 200));
     const all = initMockDMs();
     return all.filter(
@@ -964,7 +964,7 @@ export async function sendMessage(
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || !isUuid(senderId) || !isUuid(recipientId)) {
     await new Promise(resolve => setTimeout(resolve, 150));
     const all = initMockDMs();
     const newDM: DirectMessage = {
@@ -995,7 +995,7 @@ export async function markMessagesRead(profileId: string, otherProfileId: string
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured || !isUuid(profileId) || !isUuid(otherProfileId)) {
     const all = initMockDMs();
     all.forEach(dm => {
       if (dm.sender_id === otherProfileId && dm.recipient_id === profileId) dm.read = true;
@@ -1020,7 +1020,7 @@ export function subscribeToMessages(
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
 
-  if (!isSupabaseConfigured) return () => {};
+  if (!isSupabaseConfigured || !isUuid(profileId)) return () => {};
 
   const channel = supabase
     .channel(`dms:${profileId}`)

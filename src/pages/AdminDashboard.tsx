@@ -187,7 +187,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           .from('profiles')
           .select('role')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError || !profile) {
           // If whitelisted, fallback to admin role

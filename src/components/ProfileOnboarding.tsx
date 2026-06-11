@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Loader2, Sparkles, User, FileText, CheckCircle2 } from 'lucide-react';
+import { isUuid } from '../lib/api';
 
 interface ProfileOnboardingProps {
   session: any;
@@ -229,7 +230,7 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
       // 2. Award Welcoming Achievement "Early Sparkler" inside Database
       const finalProfileId = currentProfileId || resolvedProfileId;
 
-      if (finalProfileId) {
+      if (finalProfileId && isUuid(finalProfileId)) {
         try {
           await supabase.from('achievements').insert({
             profile_id: finalProfileId,

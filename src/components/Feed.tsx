@@ -3,7 +3,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { PostCard } from './PostCard';
 import { AlertTriangle, RefreshCw, Sparkles, ShieldAlert } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { fetchPosts } from '../lib/api';
+import { fetchPosts, isUuid } from '../lib/api';
 
 export interface FeedProps {
   theme: 'light' | 'dark';
@@ -37,7 +37,7 @@ export const Feed: React.FC<FeedProps> = (props) => {
       const isSupabaseConfigured =
         import.meta.env.VITE_SUPABASE_URL &&
         import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
-      if (!isSupabaseConfigured) {
+      if (!isSupabaseConfigured || !isUuid(currentProfileId)) {
         const mockProfile = currentProfileId === 'auth-1' ? {
           username: 'spark_team',
           display_name: 'Spark Team',
@@ -55,7 +55,7 @@ export const Feed: React.FC<FeedProps> = (props) => {
           .from('profiles')
           .select('username, display_name, avatar_url')
           .eq('id', currentProfileId)
-          .single();
+          .maybeSingle();
         if (!error && data && active) {
           setCurrentUserProfile(data);
         }

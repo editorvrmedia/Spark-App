@@ -53,7 +53,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostC
             .from('profiles')
             .select('*')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
           setProfile(data);
         }
       } catch (err) {
@@ -152,7 +152,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onPostC
           .from('profiles')
           .select('id, is_suspended')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError || !userProfile) throw new Error('Could not retrieve user profile records.');
         if (userProfile.is_suspended) throw new Error('Your account is currently suspended. You cannot write posts.');
