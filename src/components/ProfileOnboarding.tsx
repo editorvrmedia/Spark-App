@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Loader2, Sparkles, User, FileText, CheckCircle2 } from 'lucide-react';
 
@@ -72,6 +72,39 @@ export const ProfileOnboarding: React.FC<ProfileOnboardingProps> = ({
   const isSupabaseConfigured =
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+
+  useEffect(() => {
+    async function loadExistingProfile() {
+      if (!isSupabaseConfigured || !session?.user?.id || session.user.id === 'mock-user-id') {
+        return;
+      }
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name, bio, interests, avatar_url')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (profile) {
+          if (profile.display_name) {
+            setDisplayName(profile.display_name);
+          }
+          if (profile.bio) {
+            setBio(profile.bio);
+          }
+          if (profile.avatar_url) {
+            setSelectedAvatar(profile.avatar_url);
+          }
+          if (profile.interests && profile.interests.length > 0) {
+            setSelectedInterests(profile.interests);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load existing profile for onboarding:', err);
+      }
+    }
+    loadExistingProfile();
+  }, [session, isSupabaseConfigured]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
