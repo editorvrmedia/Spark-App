@@ -693,6 +693,26 @@ REVOKE EXECUTE ON FUNCTION public.check_post_update_privileges() FROM PUBLIC, an
 REVOKE EXECUTE ON FUNCTION public.sync_admin_whitelist_role() FROM PUBLIC, anon, authenticated;
 REVOKE EXECUTE ON FUNCTION public.sync_profile_role_on_email_change() FROM PUBLIC, anon, authenticated;
 
+-- Grant EXECUTE to supabase_auth_admin for auth triggers
+GRANT EXECUTE ON FUNCTION public.handle_new_user_signup() TO supabase_auth_admin;
+GRANT EXECUTE ON FUNCTION public.sync_profile_role_on_email_change() TO supabase_auth_admin;
+
+-- Grant EXECUTE to authenticated for triggers on tables they can modify
+GRANT EXECUTE ON FUNCTION public.set_updated_at() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.notify_on_like() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.notify_on_comment() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.notify_on_follow() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.notify_on_post_status_change() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.enqueue_post_for_moderation() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.check_profile_update_privileges() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.check_post_update_privileges() TO authenticated, service_role;
+
+-- Grant EXECUTE to service_role for moderation and admin triggers
+GRANT EXECUTE ON FUNCTION moderation.set_reviewed_at() TO service_role;
+GRANT EXECUTE ON FUNCTION public.set_published_at_on_approve() TO service_role;
+GRANT EXECUTE ON FUNCTION public.sync_admin_whitelist_role() TO service_role;
+
+
 -- Client-facing RPC permissions
 REVOKE EXECUTE ON FUNCTION public.is_admin() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
